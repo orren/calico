@@ -6,8 +6,6 @@
 #include <string.h>
 
 
-
-
 int __sum(int A[], int length) {
   int i, sum = 0;
   for (i = 0; i < length; i++) sum += A[i];

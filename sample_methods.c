@@ -1,5 +1,7 @@
+#include <calico.c>
+
 /*
- * sum(\multiply(A, 2), length) == \result * 2
+ * sum(\multiply(A, 2, length), length) == \result * 2
  * sum(\permute(A), length) == \result
  */
 int sum(int A[], int length) {
@@ -10,9 +12,6 @@ int sum(int A[], int length) {
   return sum;
 }
 
-/*
- * 
- */
 int multiply(int A[], int factor, int length) {
   int i;
   for (i = 0; i < length; i++) {
@@ -20,6 +19,9 @@ int multiply(int A[], int factor, int length) {
   }
 }
 
+/*
+ * 
+ */
 int permute(int A[], int length) {
   int i;
   for (i = 0; i < length; i++) {
@@ -29,4 +31,3 @@ int permute(int A[], int length) {
     A[which] = temp;
   }
 }
-
