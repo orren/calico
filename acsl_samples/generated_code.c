@@ -7,6 +7,43 @@ struct __anonstruct___mpz_struct_1 {
 typedef struct __anonstruct___mpz_struct_1 __mpz_struct;
 typedef __mpz_struct ( __attribute__((__FC_BUILTIN__)) mpz_t)[1];
 typedef unsigned int size_t;
+typedef unsigned int ino_t;
+typedef unsigned int gid_t;
+typedef unsigned int uid_t;
+typedef long time_t;
+typedef unsigned int blkcnt_t;
+typedef unsigned int blksize_t;
+typedef unsigned int dev_t;
+typedef unsigned int mode_t;
+typedef unsigned int nlink_t;
+typedef unsigned int off_t;
+struct stat {
+   dev_t st_dev ;
+   ino_t st_ino ;
+   mode_t st_mode ;
+   nlink_t st_nlink ;
+   uid_t st_uid ;
+   gid_t st_gid ;
+   dev_t st_rdev ;
+   off_t st_size ;
+   time_t st_atime ;
+   time_t st_mtime ;
+   time_t st_ctime ;
+   blksize_t st_blksize ;
+   blkcnt_t st_blocks ;
+   char *__fc_real_data ;
+   int __fc_real_data_max_size ;
+};
+struct __fc_FILE {
+   unsigned int __fc_stdio_id ;
+   unsigned int __fc_maxsz ;
+   unsigned int __fc_writepos ;
+   unsigned int __fc_readpos ;
+   int __fc_is_a_socket ;
+   int mode ;
+   struct stat *__fc_inode ;
+};
+typedef struct __fc_FILE FILE;
 /*@ requires predicate ≢ 0;
     assigns \nothing; */
 extern  __attribute__((__FC_BUILTIN__)) void e_acsl_assert(int predicate,
@@ -30,17 +67,43 @@ axiomatic
   
   }
  */
+/*@ assigns \result \from *((char *)ptr+(0..size-1)); */
+extern  __attribute__((__FC_BUILTIN__)) void *__store_block(void *ptr,
+                                                            size_t size);
+
+/*@ assigns \nothing; */
+extern  __attribute__((__FC_BUILTIN__)) void __full_init(void *ptr);
+
+/*@ assigns \nothing; */
+extern  __attribute__((__FC_BUILTIN__)) void __literal_string(void *ptr);
+
 extern size_t __memory_size;
 
 /*@
 predicate diffSize{L1, L2}(ℤ i) =
   \at(__memory_size,L1)-\at(__memory_size,L2) ≡ i;
  */
+extern FILE *__fc_stdout;
+
+/*@ assigns *__fc_stdout;
+    assigns *__fc_stdout \from *(format+(..)); */
+extern int printf(char const *format , ...);
+
 int main(void)
 {
+  char *__e_acsl_literal_string;
   int __retres;
-  /*@ assert \false; */
-  e_acsl_assert(0,(char *)"Assertion",(char *)"main",(char *)"\\false",3);
+  int a[3];
+  a[0] = 1;
+  a[1] = 2;
+  a[2] = 3;
+  __e_acsl_literal_string = "The sum is: %d\n";
+  __store_block((void *)__e_acsl_literal_string,sizeof("The sum is: %d\n"));
+  __full_init((void *)__e_acsl_literal_string);
+  __literal_string((void *)__e_acsl_literal_string);
+  printf(__e_acsl_literal_string,1);
+  /*@ assert \true; */
+  e_acsl_assert(1,(char *)"Assertion",(char *)"main",(char *)"\\true",18);
   __retres = 0;
   return __retres;
 }
