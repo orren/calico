@@ -2,17 +2,25 @@ open Printf
 open List
 
 type property = { input_prop: string list; output_prop: string }
-type annotatedFunction = {annotations: string; return_type: string; fun_name: string;
-                          parameters: string list; body: string; properties: property list }
-type sourceUnderTest = { file_name: string; top_source: string list; functions: annotatedFunction list}
+type parameter = { param_type: string; param_name: string; is_array: bool }
+type annotatedFunction = { annotations: string; return_type: string; fun_name: string;
+                          parameters: parameter list; body: string; properties: property list }
+type sourceUnderTest = { file_name: string; top_source: string list; functions: annotatedFunction list }
 
 let prop1: property = {input_prop = ["multiply(A, 2, length)"; "id"] ; output_prop = "double"}
 let prop2: property = {input_prop = ["multiply(A, -1, length"; "id"] ; output_prop = "negate"}
 
 let fun1: annotatedFunction = {annotations = "/**\n * Sums the elements of an array?\n *\n * @input-prop multiply(A, 2, length), id\n * @output-prop double\n */";
         return_type = "int"; fun_name = "sum"; 
-        parameters = [ "int A[]" ; "int length" ] ;
-        body = "int i, sum = 0;\nfor (i = 0; i < length; i++) sum += A[i];\nreturn sum;\n" ;        properties = [prop1; prop2]}
+        parameters = [ {param_type = "int"; param_name = "A"; is_array = true};
+                       {param_type = "int"; param_name = "length"; is_array = false} ] ;
+        body = "    int i, sum = 0;\n    for (i = 0; i < length; i++) sum += A[i];\n    return sum;" ; properties = [prop1; prop2]}
+
+let simpleTestSUT : sourceUnderTest = {
+    file_name = "simple_test" ;
+    top_source = ["#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>"; "// some comment or whatever"] ;
+    functions = [fun1]
+    }
 
 let rec range_list (i : int) (j : int) (acc : int list) : int list = 
     if i > j then acc
@@ -26,7 +34,7 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
     | ((n1 :: rest1), (n2 :: rest2)) -> n1 :: n2 :: (merge rest1 rest2)
     end ;;
 
-let write_param (param : parameter) : string =
+let write_param (param : parameter) : string = 
     param.param_type ^ " " ^ param.param_name ^ (if param.is_array then "[]" else "")
 
 let transformed_call (return_type : string) (fun_name : string)
@@ -41,9 +49,8 @@ let transformed_call (return_type : string) (fun_name : string)
     "        return 0;\n" ^
     "    }\n"
 
-let property_assertion (return_type : string) (p: property) (procNum : int) : string =
-    "    " ^ return_type ^
-    "*trans_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
+let property_assertion (p: property) (procNum : int) : string =
+    "    trans_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
     (* TODO: for compound data types, we need the tester to supply a notion of equality *)
     "    if (*result != *trans_result) {\n" ^
     (* TODO: in order to print the actual and expected results, we need a printing interface *)
@@ -60,8 +67,8 @@ let instrument_function (f : annotatedFunction) : string =
     "(" ^ String.concat ", " (map write_param f.parameters) ^ ") {\n" ^ f.body ^ "\n}\n\n" ^
 
     (* instrumented version *)
-    f.annotations ^ f.return_type ^ f.fun_name ^
-    "(" ^ String.concat ", " f.parameters ^ ") {\n" ^
+    f.annotations ^ "\n" ^ f.return_type ^ " " ^ f.fun_name ^
+    "(" ^ String.concat ", " (map write_param f.parameters) ^ ") {\n" ^
 
     (* fork *)
     "    int key = 9487;\n" ^ (* why this number? *)
@@ -82,8 +89,8 @@ let instrument_function (f : annotatedFunction) : string =
 
     (* parent runs original inputs and waits for children *)
     "    if (procNum == -1) {\n" ^
-    "        " ^ f.return_type ^ "result = __" ^ f.fun_name ^
-             "(" ^ String.concat ", " f.parameters ^ ");\n" ^
+    "        " ^ f.return_type ^ " result = __" ^ f.fun_name ^
+             "(" ^ String.concat ", " (map (fun (p : parameter) -> p.param_name) f.parameters) ^ ");\n" ^
     "        for (i = 0; i < numProps; i += 1) {\n" ^
     "            wait();\n" ^
     "        }\n" ^
