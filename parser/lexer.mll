@@ -1,0 +1,87 @@
+(* A lexer for the simple boolean logic grammar specified in grammar.txt *)
+
+{
+  open Lexing
+  open Parser
+  open Range
+
+  exception Lexer_error of Range.t * string
+
+  (* Creates a Range.pos from the Lexing.position data *)
+  let pos_of_lexpos (p:Lexing.position) : pos =
+    mk_pos (p.pos_lnum) (p.pos_cnum - p.pos_bol)
+
+  (* Creates a Range.t from two Lexing.positions *)
+  let mk_lex_range (p1:Lexing.position) (p2:Lexing.position) : Range.t =
+    mk_range p1.pos_fname (pos_of_lexpos p1) (pos_of_lexpos p2)
+
+  (* Expose the lexer state as a Range.t value *)
+  let lex_range lexbuf : Range.t =
+    mk_lex_range (lexeme_start_p lexbuf) (lexeme_end_p lexbuf)
+
+  (* Reset the lexer state *)
+  let reset_lexbuf (filename:string) lexbuf : unit =
+    lexbuf.lex_curr_p <- {
+      pos_fname = filename;
+      pos_cnum = 0;
+      pos_bol = 0;
+      pos_lnum = 1;
+    }
+
+  (* Boilerplate to define exceptional cases in the lexer. *)
+  let unexpected_char lexbuf (c:char) : 'a =
+    raise (Lexer_error (lex_range lexbuf,
+        Printf.sprintf "Unexpected character: '%c'" c))
+}
+
+
+(* Basic regular expressions for the tokens of this grammar *)
+let lowercase = ['a'-'z']
+let uppercase = ['A'-'Z']
+let digit = ['0'-'9']
+let alphachar = uppercase | lowercase
+let idchar = alphachar | '_' (* legal identifiers *)
+
+let nl = '\n'
+let linewhitespace = ['\t' ' ' '\r']
+let whitespace = linewhitespace | nl
+
+let in_prop  = ['@'] whitespace* "input-prop"
+let out_prop = ['@'] whitespace* "output-prop"
+
+let src_str = ([^ '/' '\n'] | ('/' [^ '*']))*
+
+let comment_text = idchar | whitespace
+let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit (* Other characters we care about... *)
+let anychar = idchar | other_char
+let linechar = anychar | linewhitespace
+let other = anychar | whitespace
+
+let ctrl_line = '#' linechar+ (* nl *)
+
+(* Returns a token of type as specified in parser.mly
+
+   Each token carries a Range.t value indicating its
+   position in the file.
+*)
+rule token = parse
+  | eof             { EOF }
+  (* | nl              { NL (lex_range lexbuf) } *)
+  | ctrl_line       { CTRL (lex_range lexbuf, lexeme lexbuf) }
+  | whitespace+     { token lexbuf }  (* skip whitespace *)
+  | "/*"            { COPEN (lex_range lexbuf) }
+  | "*/"            { CCLOS (lex_range lexbuf) }
+  | comment_text*   { COMM (lex_range lexbuf, lexeme lexbuf) }
+  (* | idchar anychar* { IDENT (lex_range lexbuf, lexeme lexbuf) } *)
+  | in_prop         { INSTART  (lex_range lexbuf) }
+  | out_prop        { OUTSTART (lex_range lexbuf) }
+  | ','             { LSEP (lex_range lexbuf) }
+  | '('             { LPAREN (lex_range lexbuf) }
+  | ')'             { RPAREN (lex_range lexbuf) }
+  | ';'             { SEMI (lex_range lexbuf) }
+  (* | other+          { OTHER (lex_range lexbuf, lexeme lexbuf) } (* Conflict with everything! *) *)
+  | _ as c          { Printf.printf "Erring lexbuf pos: %d.\n" lexbuf.lex_curr_pos;
+                      unexpected_char lexbuf c }
+  (* | "*/"            { token lexbuf } *)
+and source_lex str = parse
+  | 
