@@ -16,9 +16,10 @@ let fun1: annotatedFunction = {annotations = "/**\n * Sums the elements of an ar
                        {param_type = "int"; param_name = "length"; is_array = false} ] ;
         body = "    int i, sum = 0;\n    for (i = 0; i < length; i++) sum += A[i];\n    return sum;" ; properties = [prop1; prop2]}
 
+(* TODO: certain includes will always be necessary. We must check the first element of top_source to make sure those includes are already present, otherwise we must add them *)
 let simpleTestSUT : sourceUnderTest = {
     file_name = "simple_test" ;
-    top_source = ["#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>"; "// some comment or whatever"] ;
+    top_source = ["#include <unistd.h>\n#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>"; "// some comment or whatever"] ;
     functions = [fun1]
     }
 
@@ -92,7 +93,7 @@ let instrument_function (f : annotatedFunction) : string =
     "        " ^ f.return_type ^ " result = __" ^ f.fun_name ^
              "(" ^ String.concat ", " (map (fun (p : parameter) -> p.param_name) f.parameters) ^ ");\n" ^
     "        for (i = 0; i < numProps; i += 1) {\n" ^
-    "            wait();\n" ^
+    "            wait(NULL);\n" ^
     "        }\n" ^
     "    }\n\n" ^
 
