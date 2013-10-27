@@ -8,10 +8,14 @@ SOURCES =      \
 	parser.ml  \
 	lexer.ml
 
+GEN_SOURCES =  \
+	parser.ml \
+	lexer.ml
+
 all: clean run
 
 clean:
-	rm *.cm*
+	rm *.cm* pmain $(GEN_SOURCES)
 
 build_lex:
 	ocamllex lexer.mll

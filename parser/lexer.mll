@@ -67,7 +67,7 @@ rule token = parse
   | eof                                      { EOF }
   | whitespace+                              { token lexbuf }  (* skip whitespace *)
   | "/*"                                     { COPEN (lex_range lexbuf) }
-  | "*/"                                     { CCLOS (lex_range lexbuf) }
+  | ['*']? "*/"                              { CCLOS (lex_range lexbuf) }
   | (com_char | linewhitespace)* nl          { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
