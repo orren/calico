@@ -49,6 +49,7 @@ let out_prop = ['@'] whitespace* "output-prop"
 
 (* let com_char = [^ '@' '*' ] | (['*'] [^ '/']) *)
 let com_char = (['*'] [^ '/'] | idchar)
+let com_line = linewhitespace* ('*' | (com_char | linewhitespace)*) nl
 let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit (* Other characters we care about... *)
 
 let anychar = idchar | other_char
@@ -68,7 +69,7 @@ rule token = parse
   | whitespace+                              { token lexbuf }  (* skip whitespace *)
   | "/*"                                     { COPEN (lex_range lexbuf) }
   | ['*']? "*/"                              { CCLOS (lex_range lexbuf) }
-  | (com_char | linewhitespace)* nl          { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
+  | com_line                                 { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
   | idchar anychar*                          { IDENT (lex_range lexbuf, lexeme lexbuf) }

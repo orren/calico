@@ -22,17 +22,18 @@ type annotated_program = TopProg of string list
 
 let str_of_pannot (annot: pannot) : string =
   match annot with
-    | (s, lst) -> "CALL TO:" ^ s ^ ", ARGS: " ^ (String.concat ", " lst) ^ " "
+    | (s, lst) -> "CALL TO:  " ^ s ^ ", ARGS: " ^ (String.concat ", " lst) ^ " "
 
 let str_of_pair (p : annotation_pair) : string =
   match p with
-    | APair (annot, str) -> "IN ANNOTATIONS: " ^
-      (String.concat ", " (List.map str_of_pannot annot)) ^ "OUT ANNOTATIONS: " ^ str
+    | APair (annot, str) -> "\nIN ANNOTATIONS: " ^
+      (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str
 
 let str_of_annot (ac : annotated_comment) : string =
   match ac with
     | AComm (str, apairs) ->
-      "ACOMM: " ^ ("COMMTEXT: " ^ str ^ "ANNOTS: " ^ (String.concat ", " (List.map str_of_pair apairs)))
+      ("COMMENT TEXT: \n" ^ str ^ "\nANNOTS: " ^ (String.concat "\n"
+                                                    (List.map str_of_pair apairs)))
 
 let str_of_prog (p : annotated_program) : string =
   match p with
