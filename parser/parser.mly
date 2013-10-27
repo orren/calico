@@ -14,7 +14,7 @@ open Ast;;
 %token <Range.t * string> CTRL
 %token <Range.t> COPEN             /*   '/' '*'  */
 %token <Range.t> CCLOS             /*   '*' '/'  */
-%token <Range.t * string> COMM     /*   comment text  */
+%token <Range.t * string> COMMLINE /*   non-annotation comment text  */
 %token <Range.t> LSEP              /*   ,    */
 %token <Range.t> LPAREN            /*   (    */
 %token <Range.t> RPAREN            /*   )    */
@@ -38,7 +38,29 @@ open Ast;;
  */
 
 toplevel:
-  | topprog EOF { $1 }
+  | topprog EOF                 { $1 }
 
 topprog:
-  | COPEN COMM CCLOS { AComm ( snd $2, Pairs ( APair (End, ""), Ends )) }
+  | COPEN COMMLINE apairs CCLOS { AComm (snd $2, $3) }
+
+apairs:
+  | apair                       { [$1] }
+  | apair apairs                { $1 :: $2 }
+
+apair:
+  | inannot outannot            { APair ($1, $2) }
+
+inannot:
+  | pannot                      { [$1] }
+  | pannot LSEP inannot         { $1 :: $3 }
+
+pannot:
+  | IDENT LPAREN exlist RPAREN  { ((snd $1), $3) }
+
+exlist:
+  | IDENT                       { [snd $1] }
+  | IDENT LSEP exlist           { (snd $1) :: $3 }
+
+outannot:
+  | OUTSTART IDENT              { snd $2 }
+

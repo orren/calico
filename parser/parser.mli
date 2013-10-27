@@ -4,7 +4,7 @@ type token =
   | CTRL of (Range.t * string)
   | COPEN of (Range.t)
   | CCLOS of (Range.t)
-  | COMM of (Range.t * string)
+  | COMMLINE of (Range.t * string)
   | LSEP of (Range.t)
   | LPAREN of (Range.t)
   | RPAREN of (Range.t)

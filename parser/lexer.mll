@@ -1,5 +1,3 @@
-(* A lexer for the simple boolean logic grammar specified in grammar.txt *)
-
 {
   open Lexing
   open Parser
@@ -49,10 +47,10 @@ let whitespace = linewhitespace | nl
 let in_prop  = ['@'] whitespace* "input-prop"
 let out_prop = ['@'] whitespace* "output-prop"
 
-let src_str = ([^ '/' '\n'] | ('/' [^ '*']))*
-
-let comment_text = idchar | whitespace
+(* let com_char = [^ '@' '*' ] | (['*'] [^ '/']) *)
+let com_char = (['*'] [^ '/'] | idchar)
 let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit (* Other characters we care about... *)
+
 let anychar = idchar | other_char
 let linechar = anychar | linewhitespace
 let other = anychar | whitespace
@@ -64,24 +62,19 @@ let ctrl_line = '#' linechar+ (* nl *)
    Each token carries a Range.t value indicating its
    position in the file.
 *)
+
 rule token = parse
-  | eof             { EOF }
-  (* | nl              { NL (lex_range lexbuf) } *)
-  | ctrl_line       { CTRL (lex_range lexbuf, lexeme lexbuf) }
-  | whitespace+     { token lexbuf }  (* skip whitespace *)
-  | "/*"            { COPEN (lex_range lexbuf) }
-  | "*/"            { CCLOS (lex_range lexbuf) }
-  | comment_text*   { COMM (lex_range lexbuf, lexeme lexbuf) }
-  (* | idchar anychar* { IDENT (lex_range lexbuf, lexeme lexbuf) } *)
-  | in_prop         { INSTART  (lex_range lexbuf) }
-  | out_prop        { OUTSTART (lex_range lexbuf) }
-  | ','             { LSEP (lex_range lexbuf) }
-  | '('             { LPAREN (lex_range lexbuf) }
-  | ')'             { RPAREN (lex_range lexbuf) }
-  | ';'             { SEMI (lex_range lexbuf) }
-  (* | other+          { OTHER (lex_range lexbuf, lexeme lexbuf) } (* Conflict with everything! *) *)
-  | _ as c          { Printf.printf "Erring lexbuf pos: %d.\n" lexbuf.lex_curr_pos;
-                      unexpected_char lexbuf c }
-  (* | "*/"            { token lexbuf } *)
-and source_lex str = parse
-  | 
+  | eof                                     { EOF }
+  | whitespace+                             { token lexbuf }  (* skip whitespace *)
+  | "/*"                                    { COPEN (lex_range lexbuf) }
+  | "*/"                                    { CCLOS (lex_range lexbuf) }
+  | (com_char | whitespace)*                { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
+  | (['*'] whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
+  | (['*'] whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
+  | idchar anychar*                         { IDENT (lex_range lexbuf, lexeme lexbuf) }
+  | ','                                     { LSEP (lex_range lexbuf) }
+  | '('                                     { LPAREN (lex_range lexbuf) }
+  | ')'                                     { RPAREN (lex_range lexbuf) }
+  | ';'                                     { SEMI (lex_range lexbuf) }
+  | _ as c                                  { Printf.printf "Erring lexbuf pos: %d.\n" lexbuf.lex_curr_pos;
+                                              unexpected_char lexbuf c }
