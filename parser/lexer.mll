@@ -64,17 +64,16 @@ let ctrl_line = '#' linechar+ (* nl *)
 *)
 
 rule token = parse
-  | eof                                     { EOF }
-  | whitespace+                             { token lexbuf }  (* skip whitespace *)
-  | "/*"                                    { COPEN (lex_range lexbuf) }
-  | "*/"                                    { CCLOS (lex_range lexbuf) }
-  | (com_char | whitespace)*                { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
-  | (['*'] whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
-  | (['*'] whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
-  | idchar anychar*                         { IDENT (lex_range lexbuf, lexeme lexbuf) }
-  | ','                                     { LSEP (lex_range lexbuf) }
-  | '('                                     { LPAREN (lex_range lexbuf) }
-  | ')'                                     { RPAREN (lex_range lexbuf) }
-  | ';'                                     { SEMI (lex_range lexbuf) }
-  | _ as c                                  { Printf.printf "Erring lexbuf pos: %d.\n" lexbuf.lex_curr_pos;
-                                              unexpected_char lexbuf c }
+  | eof                                      { EOF }
+  | whitespace+                              { token lexbuf }  (* skip whitespace *)
+  | "/*"                                     { COPEN (lex_range lexbuf) }
+  | "*/"                                     { CCLOS (lex_range lexbuf) }
+  | (com_char | linewhitespace)* nl          { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
+  | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
+  | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
+  | idchar anychar*                          { IDENT (lex_range lexbuf, lexeme lexbuf) }
+  | ','                                      { LSEP (lex_range lexbuf) }
+  | '('                                      { LPAREN (lex_range lexbuf) }
+  | ')'                                      { RPAREN (lex_range lexbuf) }
+  | ';'                                      { SEMI (lex_range lexbuf) }
+  | _ as c                                   { unexpected_char lexbuf c }

@@ -22,7 +22,7 @@ type annotated_program = TopProg of string list
 
 let str_of_pannot (annot: pannot) : string =
   match annot with
-    | (s, lst) -> "CALL TO:" ^ s ^ ", ARGS: " ^ (String.concat ", " lst)
+    | (s, lst) -> "CALL TO:" ^ s ^ ", ARGS: " ^ (String.concat ", " lst) ^ " "
 
 let str_of_pair (p : annotation_pair) : string =
   match p with
