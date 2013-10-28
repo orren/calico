@@ -26,6 +26,7 @@
       pos_lnum = 1;
     }
 
+
   (* Boilerplate to define exceptional cases in the lexer. *)
   let unexpected_char lexbuf (c:char) : 'a =
     raise (Lexer_error (lex_range lexbuf,
@@ -56,14 +57,11 @@ let anychar = idchar | other_char
 let linechar = anychar | linewhitespace
 let other = anychar | whitespace
 
-let ctrl_line = '#' linechar+ (* nl *)
-
 (* Returns a token of type as specified in parser.mly
 
    Each token carries a Range.t value indicating its
    position in the file.
 *)
-
 rule token = parse
   | eof                                      { EOF }
   | whitespace+                              { token lexbuf }  (* skip whitespace *)

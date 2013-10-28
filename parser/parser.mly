@@ -6,7 +6,7 @@ open Ast;;
 
 /* ocamlyacc uses this declaration to automatically generate
  * a token datatype.
- * Each token carries a Range.t value 
+ * Each token carries a Range.t value
  */
 
 %token EOF

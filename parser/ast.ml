@@ -17,8 +17,8 @@ type annotation_pair = APair of pannot list * string
 type annotated_comment = AComm of string * (annotation_pair list)
 type function_definition = string (* CFun of return_type * fun_name * parameter list * fun_body *)
 type annotated_fun = AFun of annotated_comment * function_definition
-(* type afun_with_context = ProgTriple of prog_context * annotated_fun * prog_context *)
-type annotated_program = TopProg of string list
+type program_element = SrcStr of string | ComStr of string (* | annotated_fun *)
+type annotated_program = program_element list
 
 let str_of_pannot (annot: pannot) : string =
   match annot with
@@ -35,6 +35,10 @@ let str_of_annot (ac : annotated_comment) : string =
       ("COMMENT TEXT: \n" ^ str ^ "\nANNOTS: " ^ (String.concat "\n"
                                                     (List.map str_of_pair apairs)))
 
+let str_of_pelem (e : program_element) : string =
+  match e with
+    | SrcStr (str) -> "SRC:\n" ^ str
+    | ComStr (str) -> "COM:\n" ^ "/*" ^ str ^ "*/"
+
 let str_of_prog (p : annotated_program) : string =
-  match p with
-    | TopProg(lst) -> String.concat "" lst
+  String.concat "\n" (List.map str_of_pelem p)

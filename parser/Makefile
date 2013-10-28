@@ -6,6 +6,7 @@ INTERFACES =   \
 SOURCES =      \
 	range.ml   \
 	parser.ml  \
+	prelex.ml  \
 	lexer.ml
 
 GEN_SOURCES =  \
@@ -19,6 +20,7 @@ clean:
 
 build_lex:
 	ocamllex lexer.mll
+	ocamllex prelex.mll
 
 build_yacc:
 	ocamlyacc parser.mly
