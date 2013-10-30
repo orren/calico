@@ -27,7 +27,7 @@ let str_of_pannot (annot: pannot) : string =
 let str_of_pair (p : annotation_pair) : string =
   match p with
     | APair (annot, str) -> "\nIN ANNOTATIONS: " ^
-      (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str
+      (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
 
 let str_of_annot (ac : annotated_comment) : string =
   match ac with

@@ -18,8 +18,8 @@ let linewhitespace = ['\t' ' ' '\r']
 let whitespace = linewhitespace | nl
 
 let anychar = [^ '\t' ' ' '\r' '\n']
+let anything = anychar | whitespace
 let linechar = anychar | linewhitespace
-let other = anychar | whitespace
 
 (* Returns a token of type as specified in parser.mly
 
@@ -28,6 +28,6 @@ let other = anychar | whitespace
 *)
 rule token = parse
   | eof                               { EOF }
-  | anychar*                          { SRC (lex_range lexbuf, lexeme lexbuf) }
+  | anything*                         { SRC (lex_range lexbuf, lexeme lexbuf) }
   | _ as c                            { unexpected_char lexbuf c }
 
