@@ -35,6 +35,10 @@ let str_of_annot (ac : annotated_comment) : string =
       ("COMMENT TEXT: \n" ^ str ^ "\nANNOTS: " ^ (String.concat "\n"
                                                     (List.map str_of_pair apairs)))
 
+let str_of_afun (af: annotated_fun) : string =
+  match af with
+    | AFun (acomm, fundef) -> (str_of_annot acomm) ^ "SRCSTR: " ^ fundef
+
 let str_of_pelem (e : program_element) : string =
   match e with
     | SrcStr (str) -> "SRC:\n" ^ str

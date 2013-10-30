@@ -1,4 +1,6 @@
-parser.ml
-lexer.ml
+comparser.ml
+comlexer.ml
+srcparser.ml
+srclexer.ml
 prelex.ml
 pmain
