@@ -12,13 +12,13 @@ open Ast;;
 %token EOF
 %token <Range.t> NL
 %token <Range.t * string> CTRL
-%token <Range.t> COPEN             /*   '/' '*'  */
-%token <Range.t> CCLOS             /*   '*' '/'  */
-%token <Range.t * string> COMMLINE /*   non-annotation comment text  */
-%token <Range.t> LSEP              /*   ,    */
-%token <Range.t> LPAREN            /*   (    */
-%token <Range.t> RPAREN            /*   )    */
-%token <Range.t> SEMI              /*   )    */
+%token <Range.t> COPEN             /* '/' '*' */
+%token <Range.t> CCLOS             /* '*' '/' */
+%token <Range.t * string> COMMLINE /* non-annotation comment text */
+%token <Range.t> LSEP              /* ,  */
+%token <Range.t> LPAREN            /* (  */
+%token <Range.t> RPAREN            /* )  */
+%token <Range.t> SEMI              /* )  */
 %token <Range.t> INSTART           /* input prop starter */
 %token <Range.t> OUTSTART          /* output prop starter */
 %token <Range.t * string> IDENT    /* identifier */
@@ -41,7 +41,7 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | COPEN commlines apairs CCLOS    { AComm ($2, $3) }
+  | commlines apairs   { AComm ($1, $2) }
 
 commlines:
   | COMMLINE                        { snd $1 }

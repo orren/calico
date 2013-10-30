@@ -1,17 +1,23 @@
 INTERFACES =   \
 	range.mli  \
-	parser.mli \
-# 	lexer.mli
+	comparser.mli \
+	srcparser.mli
 
 SOURCES =      \
 	range.ml   \
-	parser.ml  \
+	lexutil.ml \
 	prelex.ml  \
-	lexer.ml
+	srcparser.ml \
+	srclexer.ml  \
+	comparser.ml  \
+	comlexer.ml
 
 GEN_SOURCES =  \
-	parser.ml \
-	lexer.ml
+	comparser.ml \
+	comlexer.ml  \
+	srcparser.ml \
+	srclexer.ml  \
+	prelex.ml
 
 all: clean run
 
@@ -19,11 +25,13 @@ clean:
 	rm *.cm* pmain $(GEN_SOURCES)
 
 build_lex:
-	ocamllex lexer.mll
+	ocamllex comlexer.mll
+	ocamllex srclexer.mll
 	ocamllex prelex.mll
 
 build_yacc:
-	ocamlyacc parser.mly
+	ocamlyacc comparser.mly
+	ocamlyacc srcparser.mly
 
 build: build_lex build_yacc
 	ocamlc -o pmain ast.ml $(INTERFACES) $(SOURCES) main.ml
