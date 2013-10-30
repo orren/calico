@@ -3,7 +3,7 @@ open List
 
 type property = { input_prop: string list; output_prop: string }
 type parameter = { param_type: string; param_name: string; is_pointer: bool }
-type annotatedFunction = { annotations: string; return_type: string; fun_name: string;
+type annotatedFunction = { annotations: string; return_type: string; return_is_pointer: bool; fun_name: string;
                           parameters: parameter list; body: string; properties: property list }
 type sourceUnderTest = { file_name: string; top_source: string list; functions: annotatedFunction list }
 
@@ -15,8 +15,8 @@ let prop2: property = {input_prop = ["multiply_int_array(A, -1, length)"; "id_ar
 
 let fun1: annotatedFunction = {annotations = "/**\n * Sums the elements of an array?\n *\n * @input-prop multiply(A, 2, length), id\n * @output-prop double\n */";
         return_type = "int"; fun_name = "sum"; 
-        parameters = [ {param_type = "int"; param_name = "A"; is_array = true};
-                       {param_type = "int"; param_name = "length"; is_array = false} ] ;
+        parameters = [ {param_type = "int"; param_name = "A"; is_pointer = true};
+                       {param_type = "int"; param_name = "length"; is_pointer = false} ] ;
         body = "    int i, sum = 0;\n    for (i = 0; i < length; i++) sum += A[i];\n    return sum;" ; properties = [prop1; prop2]}
 
 (* TODO: certain includes will always be necessary. We must check the first element of top_source to make sure those includes are already present, otherwise we must add them *)
@@ -39,7 +39,7 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
     end ;;
 
 let write_param (param : parameter) : string = 
-    param.param_type ^ " " ^ param.param_name ^ (if param.is_array then "[]" else "")
+    param.param_type ^ (if param.is_pointer then " *" else " ") ^ param.param_name
 
 let transformed_call (return_type : string) (fun_name : string) (params : parameter list)
                      (p : property) (procNum : int) : string = 
