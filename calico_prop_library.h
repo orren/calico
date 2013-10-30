@@ -1,8 +1,8 @@
 #ifndef _calico_props
 #define _calico_props
 
-void multiply_int(int* a, int factor) {
-  *a *= factor;
+int multiply_int(int* a, int factor) {
+  return *a * factor;
 }
 
 void multiply_int_array(int *a, int factor, int length) {
