@@ -3,9 +3,9 @@
 extern void exit(int);
 
 /**
- * May sum the element of an array!
+ * May sum the elements of an array!
  * @input-prop multiply(A, 2, length), id
- * @ouptut-prop double
+ * @output-prop double
  */
 int sum ( int arr [], int length ) {
   int i = 0;

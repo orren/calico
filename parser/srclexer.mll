@@ -26,11 +26,6 @@ let other = anychar | whitespace
    Each token carries a Range.t value indicating its
    position in the file.
 *)
-(* Returns a token of type as specified in parser.mly
-
-   Each token carries a Range.t value indicating its
-   position in the file.
-*)
 rule token = parse
   | eof                               { EOF }
   | anychar*                          { SRC (lex_range lexbuf, lexeme lexbuf) }

@@ -41,11 +41,11 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | COPEN commlines apairs CCLOS    { AComm ($2, $3) }
+  | commlines apairs                { AComm ($1, $2) }
 
 commlines:
-  | COMMLINE                        { snd $1 }
-  | COMMLINE commlines              { (snd $1) ^ $2 }
+  | COMMLINE NL                     { snd $1 }
+  | COMMLINE NL commlines           { (snd $1) ^ $3 }
 
 apairs:
   | apair                           { [$1] }

@@ -19,11 +19,8 @@ let whitespace = linewhitespace | nl
 let in_prop  = ['@'] whitespace* "input-prop"
 let out_prop = ['@'] whitespace* "output-prop"
 
-let com_char = (['*'] [^ '/'] | idchar)
-let com_line = linewhitespace* ('*' | (com_char | linewhitespace)*) nl
-let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit (* Other characters we care about... *)
-
-let anychar = idchar | other_char
+let com_char = [^ '\t' ' ' '\r' '\n' '@']
+let anychar = [^ '\t' ' ' '\r' '\n']
 let linechar = anychar | linewhitespace
 let other = anychar | whitespace
 
@@ -35,9 +32,8 @@ let other = anychar | whitespace
 rule token = parse
   | eof                                      { EOF }
   | whitespace+                              { token lexbuf }  (* skip whitespace *)
-  | "/*"                                     { COPEN (lex_range lexbuf) }
-  | ['*']? "*/"                              { CCLOS (lex_range lexbuf) }
-  | com_line                                 { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
+  | com_char*                                { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
+  | nl                                       { NL (lex_range lexbuf) }
   | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
   | idchar anychar*                          { IDENT (lex_range lexbuf, lexeme lexbuf) }
