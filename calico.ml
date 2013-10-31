@@ -3,28 +3,33 @@ open List
 
 type property = { input_prop: string list; output_prop: string }
 type parameter = { param_type: string; param_name: string; is_pointer: bool }
-type annotatedFunction = { annotations: string; return_type: string; return_is_pointer: bool; fun_name: string;
-                          parameters: parameter list; body: string; properties: property list }
+type annotatedFunction = { annotations: string; return_type: string; return_is_pointer: bool; fun_name: string; parameters: parameter list; body: string; properties: property list }
 type sourceUnderTest = { file_name: string; top_source: string list; functions: annotatedFunction list }
 
 let key_number : string = "9847"
-let calico_prop_library : string list = ["multiply"; "id"; "double"]
 
-let prop1: property = {input_prop = ["multiply_int_array(A, 2, length)"; "id_array(A)"] ; output_prop = "double(result, length)"}
-let prop2: property = {input_prop = ["multiply_int_array(A, -1, length)"; "id_array(A)"] ; output_prop = "multiply_int(result, -1)"}
+let prop1: property = {input_prop = ["multiply_int_array(A, 2, length)"; "length"] ; output_prop = "multiply_int(result, 2)"}
+let prop2: property = {input_prop = ["multiply_int_array(A, -1, length)"; "length"] ; output_prop = "multiply_int(result, -1)"}
 
-let fun1: annotatedFunction = {annotations = "/**\n * Sums the elements of an array?\n *\n * @input-prop multiply(A, 2, length), id\n * @output-prop double\n */";
-        return_type = "int"; fun_name = "sum"; 
+let fun1: annotatedFunction = {annotations = "/**\n * Sums the elements of an array?\n *\n * @input-prop multiply(A, 2, length), length\n * @output-prop multiply_int(result, 2)\n */";
+        return_type = "int"; return_is_pointer = false; fun_name = "sum"; 
         parameters = [ {param_type = "int"; param_name = "A"; is_pointer = true};
                        {param_type = "int"; param_name = "length"; is_pointer = false} ] ;
         body = "    int i, sum = 0;\n    for (i = 0; i < length; i++) sum += A[i];\n    return sum;" ; properties = [prop1; prop2]}
 
+let prop3: property = {input_prop = ["multiply_double(a, -1)"]; output_prop = "result"}
+
+let fun2: annotatedFunction = {annotations = "/**\n * Returns a pointer to an integer that is the absolute value of a\n *\n * @input-prop multiply_double(a, -1)\n * @output-prop result\n */";
+        return_type = "int *"; return_is_pointer = true; fun_name = "absolute";
+        parameters = [ {param_type = "double"; param_name = "a"; is_pointer = false} ] ;
+        body = "    int *answer = malloc(sizeof(int));\n    *answer = abs(a);\n    return answer;"
+        ; properties = [prop3]}
+
 (* TODO: certain includes will always be necessary. We must check the first element of top_source to make sure those includes are already present, otherwise we must add them *)
 let simpleTestSUT : sourceUnderTest = {
     file_name = "simple_test" ;
-    top_source = ["#include <unistd.h>\n#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>"; "// some comment or whatever"] ;
-    functions = [fun1]
-    }
+    top_source = ["#include <unistd.h>\n#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>"; "// some comment or whatever"] ;
+    functions = [fun1; fun2] }
 
 let rec range_list (i : int) (j : int) (acc : int list) : int list = 
     if i > j then acc
@@ -41,17 +46,26 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
 let write_param (param : parameter) : string = 
     param.param_type ^ (if param.is_pointer then " *" else " ") ^ param.param_name
 
-let transformed_call (return_type : string) (fun_name : string) (params : parameter list)
-                     (p : property) (procNum : int) : string = 
+let input_transformation (param : parameter) (prop : string) : string =
+    (if param.is_pointer then "" else param.param_name ^ " = ") ^ prop
+
+let output_transformation (is_pointer : bool) (prop : string) : string =
+    (if is_pointer then "memcpy(result, " ^ prop ^ ")" else "*result = ") ^ prop
+
+let transformed_call (return_type : string) (return_is_pointer : bool) (fun_name : string)
+    (params : parameter list) (p : property) (procNum : int) : string =
     "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
     "        int shmid = shmget(key + procNum, result_size, 0666);\n" ^
-    "        result = shmat(shmid, NULL, 0);\n" ^
-    "        " ^ String.concat ";\n        " (p.input_prop) ^ ";\n" ^
-    "        result = __" ^ fun_name ^ "(" ^ String.concat ", "
+    "        result = shmat(shmid, NULL, 0);\n" ^ 
+    "        " ^ String.concat ";\n        "
+    (* apply input transformations *)
+    (map2 input_transformation params p.input_prop) ^ ";\n" ^
+    (* run inner function *)
+    "        " ^ (if return_is_pointer then "" else "*") ^ "result = __" ^
+    fun_name ^ "(" ^ String.concat ", "
              (map (fun (p : parameter) -> p.param_name) params) ^ ");\n" ^
-
-             (* TODO: clarify output annotation syntax *)
-    "        " ^ p.output_prop ^ ";\n" ^ 
+    (* apply output transformations *)
+    "        " ^ output_transformation return_is_pointer p.output_prop ^ ";\n" ^ 
     "        shmdt(result);\n" ^
     "        return 0;\n" ^
     "    }\n"
@@ -61,9 +75,9 @@ let property_assertion (p: property) (procNum : int) : string =
     (* TODO: for compound data types, we need the tester to supply a notion of equality *)
     "    if (orig_result != *result) {\n" ^
     (* TODO: in order to print the actual and expected results, we need a printing interface *)
-    "        printf(\"a property has been violated:\\ninput_prop: %s\\noutput_prop: %s, " ^
-    (String.concat ", " p.input_prop) ^ "\", " ^ p.output_prop ^ ");\n" ^
-    "    }"
+    "        printf(\"a property has been violated:\\ninput_prop: " ^ 
+        (String.concat ", " p.input_prop) ^ "\\noutput_prop: " ^ p.output_prop ^ "\");\n" ^
+    "    }\n"
 
 let instrument_function (f : annotatedFunction) : string =
     (* each child process will have a number *)
@@ -106,14 +120,15 @@ let instrument_function (f : annotatedFunction) : string =
     "    }\n\n" ^
 
     (* children run transformed inputs and transform the result *)
-    String.concat "\n" (map2 (transformed_call f.return_type f.fun_name f.parameters)
+    String.concat "\n" (map2
+        (transformed_call f.return_type f.return_is_pointer f.fun_name f.parameters)
         f.properties child_indexes) ^ "\n" ^
 
     (* make assertions about the results *)
-    String.concat "\n" (map2 property_assertion f.properties child_indexes) ^
+    String.concat "\n" (map2 property_assertion f.properties child_indexes) ^ "\n" ^
 
     (* cleanup *)
-    "    dealloc(shmids);\n" ^
+    "    free(shmids);\n" ^
     "    return orig_result;\n" ^
     "}"
 
