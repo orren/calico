@@ -5,3 +5,6 @@
  * @input-prop duplicate(A, length), double(length) ;
  * @output-prop double ;
  */
+int foo () {
+  baz;
+}

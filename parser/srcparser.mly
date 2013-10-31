@@ -30,6 +30,7 @@ open Ast;;
 %token <Range.t * string> CONST
 %token <Range.t * string> VOLATILE
 %token <Range.t * string> STRUCT
+%token <Range.t * string> ENUM
 %token <Range.t * string> UNION
 %token <Range.t * string> LBRACE
 %token <Range.t * string> RBRACE
@@ -42,6 +43,7 @@ open Ast;;
 %token <Range.t * string> SEMI
 %token <Range.t * string> COLON
 %token <Range.t * string> DOT
+%token <Range.t * string> EQUALS
 
 %token <Range.t * string> IDENT
 
@@ -61,16 +63,40 @@ open Ast;;
  */
 
 toplevel:
-  | declaration_specifiers declarator declaration_list compound_statement { "" }
-  |                        declarator declaration_list compound_statement { "" }
-  | declaration_specifiers declarator                  compound_statement { "" }
-  |                        declarator                  compound_statement { "" }
+  | declaration_specifiers declarator declaration_list compound_statement { $4 }
+  |                        declarator declaration_list compound_statement { $3 }
+  | declaration_specifiers declarator                  compound_statement { $3 }
+  |                        declarator                  compound_statement { $2 }
 
 compound_statement:
-  | RBRACE any LBRACE {}
+  | RBRACE any LBRACE { $2 }
 
 constant_expression:
   | any {}
+
+assignment_expression:
+  | any {}
+
+any:
+  | any_elem { $1 }
+  | any_elem any { $1 ^ $2 }
+
+declaration:
+  | declaration_specifiers SEMI {}
+  | declaration_specifiers init_declarator_list SEMI {}
+
+init_declarator_list:
+  | declarator {}
+  | declarator EQUALS einitializer {}
+
+initializer_list:
+  | einitializer {}
+  | initializer_list COMMA einitializer {}
+
+einitializer:
+  | assignment_expression {}
+  | LBRACE initializer_list RBRACE {}
+  | LBRACE initializer_list COMMA RBRACE {}
 
 declaration_list:
   | declaration {}
@@ -97,6 +123,22 @@ type_specifier:
   | struct_or_union_specifier {}
   | enum_specifier {}
   | typedef_name  {}
+
+enum_specifier:
+  | ENUM IDENT LBRACE enumerator_list RBRACE {}
+  | ENUM       LBRACE enumerator_list RBRACE {}
+  | ENUM IDENT {}
+
+enumerator_list:
+  | enumerator {}
+  | enumerator_list COMMA enumerator_list {}
+
+enumerator:
+  | IDENT {}
+  | IDENT EQUALS constant_expression {}
+
+typedef_name:
+  | IDENT {}
 
 type_qualifier:
   | CONST {}
@@ -145,6 +187,10 @@ direct_declarator:
   | direct_declarator LPAREN identifier_list RPAREN {}
   | direct_declarator LPAREN                 RPAREN {}
 
+identifier_list:
+  | IDENT {}
+  | identifier_list COMMA IDENT {}
+
 parameter_type_list:
   | parameter_list {}
   | parameter_list COMMA DOT DOT DOT {}
@@ -190,3 +236,35 @@ type_qualifier_list:
   | type_qualifier {}
   | type_qualifier_list type_qualifier {}
 
+any_elem:
+  | AUTO     { snd $1 }
+  | REGISTER { snd $1 }
+  | STATIC   { snd $1 }
+  | EXTERN   { snd $1 }
+  | TYPEDEF  { snd $1 }
+  | VOID     { snd $1 }
+  | CHAR     { snd $1 }
+  | SHORT    { snd $1 }
+  | INT      { snd $1 }
+  | LONG     { snd $1 }
+  | FLOAT    { snd $1 }
+  | DOUBLE   { snd $1 }
+  | SIGNED   { snd $1 }
+  | UNSIGNED { snd $1 }
+  | CONST    { snd $1 }
+  | VOLATILE { snd $1 }
+  | STRUCT   { snd $1 }
+  | UNION    { snd $1 }
+  | LBRACE   { snd $1 }
+  | RBRACE   { snd $1 }
+  | COMMA    { snd $1 }
+  | LPAREN   { snd $1 }
+  | RPAREN   { snd $1 }
+  | LBRACKET { snd $1 }
+  | RBRACKET { snd $1 }
+  | STAR     { snd $1 }
+  | SEMI     { snd $1 }
+  | COLON    { snd $1 }
+  | DOT      { snd $1 }
+  | IDENT    { snd $1 }
+  | EQUALS   { snd $1 }

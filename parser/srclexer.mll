@@ -23,18 +23,19 @@
     ("const", fun i s -> CONST (i, s));
     ("volatile", fun i s -> VOLATILE (i, s));
     ("struct", fun i s -> STRUCT (i, s));
+    ("enum", fun i s -> ENUM (i, s));
     ("union", fun i s -> UNION (i, s));
   ]
 
-  type build_fun = Range.t -> Srcparser.token
+  type build_fun = Range.t -> string -> Srcparser.token
   let (symbol_table : (string, build_fun) Hashtbl.t) = Hashtbl.create 1024
   let _ =
     List.iter (fun (str,f) -> Hashtbl.add symbol_table str f) type_keywords
 
-  let create_token lexbuf =
+  let create_token lexbuf : Srcparser.token =
     let str = lexeme lexbuf in
     let r = lex_range lexbuf in
-    try (Hashtbl.find symbol_table str) r
+    try (Hashtbl.find symbol_table str) r str
     with _ -> IDENT (r, str)
 
 }
@@ -69,6 +70,7 @@ rule token = parse
   | "."                       { DOT (lex_range lexbuf, lexeme lexbuf) }
   | "["                       { LBRACKET (lex_range lexbuf, lexeme lexbuf) }
   | "]"                       { RBRACKET (lex_range lexbuf, lexeme lexbuf) }
+  | "="                       { EQUALS (lex_range lexbuf, lexeme lexbuf) }
   | whitespace+               { token lexbuf }
   | idchar (idchar | digit)*  { create_token lexbuf }
   | _ as c                    { unexpected_char lexbuf c }

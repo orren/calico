@@ -46,7 +46,7 @@ let parse (filename: string) (buf: Lexing.lexbuf)  =
 
 
 let parse_file () : unit =
-  let fname = "sum_example.c" in
+  let fname = "annotation_sample.c" in
   let ic = open_in fname in
   try
     Printf.printf "Parsing %s ... \n" fname;
