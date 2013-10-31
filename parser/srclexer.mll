@@ -35,9 +35,9 @@
   let create_token lexbuf : Srcparser.token =
     let str = lexeme lexbuf in
     let r = lex_range lexbuf in
+    (Printf.printf "String to token: %s\n" str);
     try (Hashtbl.find symbol_table str) r str
     with _ -> IDENT (r, str)
-
 }
 
 (* Basic regular expressions for the tokens of this grammar *)
@@ -59,18 +59,23 @@ let whitespace = linewhitespace | nl
 *)
 rule token = parse
   | eof                       { EOF }
-  | "{"                       { LBRACE (lex_range lexbuf, lexeme lexbuf) }
-  | "}"                       { RBRACE (lex_range lexbuf, lexeme lexbuf) }
-  | ";"                       { SEMI (lex_range lexbuf, lexeme lexbuf) }
-  | ":"                       { COLON (lex_range lexbuf, lexeme lexbuf) }
-  | "("                       { LPAREN (lex_range lexbuf, lexeme lexbuf) }
-  | ")"                       { RPAREN (lex_range lexbuf, lexeme lexbuf) }
-  | ","                       { COMMA (lex_range lexbuf, lexeme lexbuf) }
-  | "*"                       { STAR (lex_range lexbuf, lexeme lexbuf) }
-  | "."                       { DOT (lex_range lexbuf, lexeme lexbuf) }
+  | "{"                       { Printf.printf "LBRACE read\n";
+                                LBRACE   (lex_range lexbuf, lexeme lexbuf) }
+  | "}"                       { Printf.printf "RBRACE read\n";
+                                RBRACE   (lex_range lexbuf, lexeme lexbuf) }
+  | ";"                       { SEMI     (lex_range lexbuf, lexeme lexbuf) }
+  | ":"                       { COLON    (lex_range lexbuf, lexeme lexbuf) }
+  | "("                       { Printf.printf "LPAREN read\n";
+                                LPAREN   (lex_range lexbuf, lexeme lexbuf) }
+  | ")"                       { Printf.printf "RPAREN read\n";
+                                RPAREN   (lex_range lexbuf, lexeme lexbuf) }
+  | ","                       { COMMA    (lex_range lexbuf, lexeme lexbuf) }
+  | "*"                       { STAR     (lex_range lexbuf, lexeme lexbuf) }
+  | "."                       { DOT      (lex_range lexbuf, lexeme lexbuf) }
   | "["                       { LBRACKET (lex_range lexbuf, lexeme lexbuf) }
   | "]"                       { RBRACKET (lex_range lexbuf, lexeme lexbuf) }
-  | "="                       { EQUALS (lex_range lexbuf, lexeme lexbuf) }
-  | whitespace+               { token lexbuf }
+  | "="                       { EQUALS   (lex_range lexbuf, lexeme lexbuf) }
+  | whitespace+               { Printf.printf "WS read\n";
+                                token lexbuf }
   | idchar (idchar | digit)*  { create_token lexbuf }
   | _ as c                    { unexpected_char lexbuf c }

@@ -47,8 +47,6 @@ open Ast;;
 
 %token <Range.t * string> IDENT
 
-
-
 /* ---------------------------------------------------------------------- */
 
 /* Mark 'toplevel' as a starting nonterminal of the grammar */
@@ -63,13 +61,16 @@ open Ast;;
  */
 
 toplevel:
+  | function_definition EOF  { $1 }
+
+function_definition:
   | declaration_specifiers declarator declaration_list compound_statement { $4 }
   |                        declarator declaration_list compound_statement { $3 }
   | declaration_specifiers declarator                  compound_statement { $3 }
   |                        declarator                  compound_statement { $2 }
 
 compound_statement:
-  | RBRACE any LBRACE { $2 }
+  | LBRACE any RBRACE { $2 }
 
 constant_expression:
   | any {}
@@ -78,8 +79,22 @@ assignment_expression:
   | any {}
 
 any:
-  | any_elem { $1 }
+  | any_elem     { Printf.printf "any elem: %s\n" $1;
+                   $1 }
   | any_elem any { $1 ^ $2 }
+
+declarator:
+  | pointer direct_declarator {}
+  |         direct_declarator { Printf.printf "direct_declarator\n"; }
+
+direct_declarator:
+  | IDENT {}
+  | LPAREN declarator RPAREN {}
+  | direct_declarator LBRACKET constant_expression RBRACKET {}
+  | direct_declarator LBRACKET                     RBRACKET {}
+  | direct_declarator LPAREN parameter_type_list RPAREN {}
+  | direct_declarator LPAREN identifier_list RPAREN {}
+  | direct_declarator LPAREN                 RPAREN {}
 
 declaration:
   | declaration_specifiers SEMI {}
@@ -104,25 +119,25 @@ declaration_list:
 
 declaration_specifiers:
   | storage_class_specifier {}
-  | type_specifier {}
+  | type_specifier { Printf.printf "type_specifier: %s\n" $1; }
   | type_qualifier {}
   | storage_class_specifier declaration_specifiers {}
   | type_specifier          declaration_specifiers {}
-  | type_qualifier          declaration_specifiers  {}
+  | type_qualifier          declaration_specifiers {}
 
 type_specifier:
-  | VOID {}
-  | CHAR {}
-  | SHORT {}
-  | INT {}
-  | LONG {}
+  /* | VOID { }
+  | CHAR {} 
+  | SHORT {} */
+  | INT { snd $1 }
+  /* | LONG {}
   | FLOAT {}
   | DOUBLE {}
   | SIGNED {}
   | UNSIGNED {}
   | struct_or_union_specifier {}
   | enum_specifier {}
-  | typedef_name  {}
+  | typedef_name  {} */
 
 enum_specifier:
   | ENUM IDENT LBRACE enumerator_list RBRACE {}
@@ -174,18 +189,6 @@ struct_or_union:
   | STRUCT {}
   | UNION {}
 
-declarator:
-  | pointer direct_declarator {}
-  |         direct_declarator {}
-
-direct_declarator:
-  | IDENT {}
-  | LPAREN declarator RPAREN {}
-  | direct_declarator LBRACKET constant_expression RBRACKET {}
-  | direct_declarator LBRACKET                     RBRACKET {}
-  | direct_declarator LPAREN parameter_type_list RPAREN {}
-  | direct_declarator LPAREN identifier_list RPAREN {}
-  | direct_declarator LPAREN                 RPAREN {}
 
 identifier_list:
   | IDENT {}

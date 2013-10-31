@@ -30,20 +30,18 @@ let rec afuns_of_program (pelems: program_element list) : annotated_fun list =
  * token function available in the lexer to create the
  * token stream.
  *)
-let parse (filename: string) (buf: Lexing.lexbuf)  =
+let parse (filename: string) (buf: Lexing.lexbuf) : unit =
     (* Lexutil.reset_lexbuf filename buf; *)
     (* Comparser.toplevel Comlexer.token buf *)
   try
     Lexutil.reset_lexbuf filename buf;
     let prog_elements = Prelex.prog_elements [] buf in
     let afuns = afuns_of_program prog_elements in
-    Printf.printf "Prelex result: \n%s\n" (str_of_prog prog_elements);
+    (* Printf.printf "Prelex result: \n%s\n" (str_of_prog prog_elements); *)
     Printf.printf "Parse result: \n%s\n" (String.concat "\n" (List.map str_of_afun afuns))
   with Parsing.Parse_error ->
     failwith (Printf.sprintf "Parse error at %s."
         (Range.string_of_range (Lexutil.lex_range buf)))
-
-
 
 let parse_file () : unit =
   let fname = "annotation_sample.c" in
