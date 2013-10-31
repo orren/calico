@@ -6,35 +6,27 @@
 
   let type_keywords = [
     (* Keywords appearing in c types *)
-    ("auto", fun i -> AUTO i);
-    ("register", fun i -> REGISTER i);
-    ("static", fun i -> STATIC i);
-    ("extern", fun i -> EXTERN i);
-    ("typedef", fun i -> TYPEDEF i);
-    ("void", fun i -> VOID i);
-    ("char", fun i -> CHAR i);
-    ("short", fun i -> SHORT i);
-    ("int", fun i -> INT i);
-    ("long", fun i -> LONG i);
-    ("float", fun i -> FLOAT i);
-    ("double", fun i -> DOUBLE i);
-    ("signed", fun i -> SIGNED i);
-    ("unsigned", fun i -> UNSIGNED i);
-    ("const", fun i -> CONST i);
-    ("volatile", fun i -> VOLATILE i);
-    ("struct", fun i -> STRUCT i);
-    ("union", fun i -> UNION i);
-    ("{", fun i -> LBRACE i);
-    ("}", fun i -> RBRACE i);
-    ( ",", fun i -> COMMA i);
-    ( "(", fun i -> LPAREN i);
-    ( ")", fun i -> RPAREN i);
-    ( "[", fun i -> LBRACKET i);
-    ( "]", fun i -> RBRACKET i);
-    ( "*", fun i -> STAR i)
+    ("auto", fun i s -> AUTO (i, s));
+    ("register", fun i s -> REGISTER (i, s));
+    ("static", fun i s -> STATIC (i, s));
+    ("extern", fun i s -> EXTERN (i, s));
+    ("typedef", fun i s -> TYPEDEF (i, s));
+    ("void", fun i s -> VOID (i, s));
+    ("char", fun i s -> CHAR (i, s));
+    ("short", fun i s -> SHORT (i, s));
+    ("int", fun i s -> INT (i, s));
+    ("long", fun i s -> LONG (i, s));
+    ("float", fun i s -> FLOAT (i, s));
+    ("double", fun i s -> DOUBLE (i, s));
+    ("signed", fun i s -> SIGNED (i, s));
+    ("unsigned", fun i s -> UNSIGNED (i, s));
+    ("const", fun i s -> CONST (i, s));
+    ("volatile", fun i s -> VOLATILE (i, s));
+    ("struct", fun i s -> STRUCT (i, s));
+    ("union", fun i s -> UNION (i, s));
   ]
 
-  type build_fun = Range.t -> Parser.token
+  type build_fun = Range.t -> Srcparser.token
   let (symbol_table : (string, build_fun) Hashtbl.t) = Hashtbl.create 1024
   let _ =
     List.iter (fun (str,f) -> Hashtbl.add symbol_table str f) type_keywords
@@ -65,15 +57,18 @@ let whitespace = linewhitespace | nl
    position in the file.
 *)
 rule token = parse
-  | eof                        { EOF }
-  | "{"                        { LBRACE (lex_range lexbuf) }
-  | "}"                        { RBRACE (lex_range lexbuf) }
-  | ";"                        { SEMI (lex_range lexbuf) }
-  | "("                        { LPAREN (lex_range lexbuf) }
-  | ")"                        { RPAREN (lex_range lexbuf) }
-  | ","                        { COMMA (lex_range lexbuf) }
-  | "*"                        { STAR (lex_range lexbuf) }
-  | "["                        { LBRACKET (lex_range lexbuf) }
-  | "]"                        { RBRACKET (lex_range lexbuf) }
-  | idchar (idchar | digit)*   { create_token lexbuf }
-  | _ as c                     { unexpected_char lexbuf c }
+  | eof                       { EOF }
+  | "{"                       { LBRACE (lex_range lexbuf, lexeme lexbuf) }
+  | "}"                       { RBRACE (lex_range lexbuf, lexeme lexbuf) }
+  | ";"                       { SEMI (lex_range lexbuf, lexeme lexbuf) }
+  | ":"                       { COLON (lex_range lexbuf, lexeme lexbuf) }
+  | "("                       { LPAREN (lex_range lexbuf, lexeme lexbuf) }
+  | ")"                       { RPAREN (lex_range lexbuf, lexeme lexbuf) }
+  | ","                       { COMMA (lex_range lexbuf, lexeme lexbuf) }
+  | "*"                       { STAR (lex_range lexbuf, lexeme lexbuf) }
+  | "."                       { DOT (lex_range lexbuf, lexeme lexbuf) }
+  | "["                       { LBRACKET (lex_range lexbuf, lexeme lexbuf) }
+  | "]"                       { RBRACKET (lex_range lexbuf, lexeme lexbuf) }
+  | whitespace+               { token lexbuf }
+  | idchar (idchar | digit)*  { create_token lexbuf }
+  | _ as c                    { unexpected_char lexbuf c }

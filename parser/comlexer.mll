@@ -42,7 +42,7 @@ rule token = parse
   | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
   | idchar anychar*                          { IDENT (lex_range lexbuf, lexeme lexbuf) }
-  | ','                                      { LSEP (lex_range lexbuf) }
+  | ','                                      { LSEP (lex_range lexbuf) } 
   | '('                                      { LPAREN (lex_range lexbuf) }
   | ')'                                      { RPAREN (lex_range lexbuf) }
   | ';'                                      { SEMI (lex_range lexbuf) }
