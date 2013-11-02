@@ -19,8 +19,4 @@ void multiply_double_array(double* a, double factor, double length) {
   for (i = 0; i < length; i++) a[i] *= factor;
 }
 
-void id(void *a) {
-  ;
-}
-
 #endif
