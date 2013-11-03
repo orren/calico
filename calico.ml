@@ -210,7 +210,7 @@ let write_source (source: sourceUnderTest) : unit =
     (* TODO: actually implement indentation tracking instead of just guessing *)
     let out = open_out ("calico_" ^ source.file_name ^ ".c") in
     let instrumented = map instrument_function source.functions in
-        fprintf out "#include \"calico_prop_library.h\"\n%s\n"
+        fprintf out "#include \"calico_prop_library.h\"\n%s\nint main () {\nreturn 0;\n}\n"
         (String.concat "\n\n" (merge source.top_source instrumented));
         close_out out;
 
