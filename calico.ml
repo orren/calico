@@ -169,8 +169,9 @@ let instrument_function (f : annotatedFunction) : string =
     "    int* shmids = malloc(numProps * sizeof(int));\n" ^
     "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
     "    int i;\n" ^
-    "    " ^ f.return_type ^ (if f.fun_kind = PointReturn then " *" else " ") ^ "orig_result;\n" ^
-    "    " ^ f.return_type ^ " *result;\n\n" ^
+    "    " ^ f.return_type ^ (if f.fun_kind = PointReturn then " *" else " ") ^ "orig_result = " ^
+    (if f.fun_kind = PointReturn then "NULL" else "0") ^
+    ";\n    " ^ f.return_type ^ " *result;\n\n" ^
     "    for (i = 0; i < numProps; i += 1) {\n" ^
     "        if (procNum == -1) {\n" ^
     "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
