@@ -18,11 +18,15 @@ open Ast;;
 %token <Range.t> LSEP              /* ,  */
 %token <Range.t> LPAREN            /* (  */
 %token <Range.t> RPAREN            /* )  */
-%token <Range.t> SEMI              /* )  */
+%token <Range.t> LBRACE            /* {  */
+%token <Range.t> RBRACE            /* }  */
+%token <Range.t> SEMI              /* ;  */
 %token <Range.t> INSTART           /* input prop starter */
 %token <Range.t> OUTSTART          /* output prop starter */
+%token <Range.t> FUNSTART          /* fun info starter */
+%token <Range.t> PARAMSTART        /* param info starter */
 %token <Range.t * string> IDENT    /* identifier */
-%token <Range.t * string> OTHER    /* other program string */
+
 
 /* ---------------------------------------------------------------------- */
 
