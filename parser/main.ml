@@ -44,7 +44,7 @@ let parse (filename: string) (buf: Lexing.lexbuf) : unit =
         (Range.string_of_range (Lexutil.lex_range buf)))
 
 let parse_file () : unit =
-  let fname = "annotation_sample.c" in
+  let fname = "sum_example.c" in
   let ic = open_in fname in
   try
     Printf.printf "Parsing %s ... \n" fname;
