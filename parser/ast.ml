@@ -14,7 +14,9 @@
 (* type prog_context = ProgContext of string list *)
 type pannot = string * string list
 type annotation_pair = APair of pannot list * string
-type annotated_comment = AComm of string * (annotation_pair list)
+type param_info = string * string (* name, type *)
+type fun_info = string * string * string (* name, type, kind *)
+type annotated_comment = AComm of string * fun_info * (param_info list) * (annotation_pair list)
 type function_definition = string (* CFun of return_type * fun_name * parameter list * fun_body *)
 type annotated_fun = AFun of annotated_comment * function_definition
 type program_element = SrcStr of string | ComStr of string (* | annotated_fun *)
@@ -29,11 +31,23 @@ let str_of_pair (p : annotation_pair) : string =
     | APair (annot, str) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
 
+let str_of_funinfo (funinfo: fun_info) : string =
+  match funinfo with
+    | (name, ty, kind) ->
+      "Function name: " ^ name ^ " Return Type: " ^ ty ^ " Fun kind: " ^ kind
+
+let str_of_param (p : param_info) : string =
+  match p with
+    | (name, ty) ->
+      "Param name: " ^ name ^ " Type: " ^ ty
+
 let str_of_annot (ac : annotated_comment) : string =
   match ac with
-    | AComm (str, apairs) ->
+    | AComm (str, funinfo, params, apairs) ->
       ("COMMENT TEXT: \n" ^ str ^ "\nANNOTS: " ^ (String.concat "\n"
-                                                    (List.map str_of_pair apairs)))
+                                                    (List.map str_of_pair apairs))) ^ "\n" ^
+        (str_of_funinfo funinfo) ^ "\nPARAMS: " ^ (String.concat "\n"
+                                                     (List.map str_of_param params)) ^ "\n"
 
 let str_of_afun (af: annotated_fun) : string =
   match af with

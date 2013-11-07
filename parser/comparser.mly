@@ -45,7 +45,7 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines apairs   { AComm ($1, $2) }
+  | commlines apairs   { AComm ($1, ("", "", ""), [], $2) }
 
 commlines:
   | COMMLINE                        { snd $1 }

@@ -4,6 +4,7 @@ INTERFACES =   \
 	srcparser.mli
 
 SOURCES =      \
+	../SUT_struct.ml \
 	range.ml   \
 	lexutil.ml \
 	prelex.ml  \

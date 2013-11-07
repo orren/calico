@@ -37,21 +37,6 @@ let other = anychar | whitespace
    position in the file.
 *)
 rule token = parse
-<<<<<<< HEAD
-  | eof                                      { EOF }
-  | whitespace+                              { token lexbuf }  (* skip whitespace *)
-  | "/*"                                     { COPEN (lex_range lexbuf) }
-  | ['*']? "*/"                              { CCLOS (lex_range lexbuf) }
-  | com_line                                 { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
-  | (['*']? whitespace* in_prop) | in_prop   { INSTART  (lex_range lexbuf) }
-  | (['*']? whitespace* out_prop) | out_prop { OUTSTART (lex_range lexbuf) }
-  | idchar anychar*                          { IDENT (lex_range lexbuf, lexeme lexbuf) }
-  | ','                                      { LSEP (lex_range lexbuf) } 
-  | '('                                      { LPAREN (lex_range lexbuf) }
-  | ')'                                      { RPAREN (lex_range lexbuf) }
-  | ';'                                      { SEMI (lex_range lexbuf) }
-  | _ as c                                   { unexpected_char lexbuf c }
-=======
   | eof                                          { EOF }
   | whitespace+                                  { token lexbuf }  (* skip whitespace *)
   | "/*"                                         { COPEN (lex_range lexbuf) }
@@ -69,4 +54,4 @@ rule token = parse
   | '}'                                          { RBRACE (lex_range lexbuf) }
   | ';'                                          { SEMI (lex_range lexbuf) }
   | _ as c                                       { unexpected_char lexbuf c }
->>>>>>> master
+
