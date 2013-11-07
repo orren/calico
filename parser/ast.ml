@@ -15,7 +15,7 @@
 type pannot = string * string list
 type annotation_pair = APair of pannot list * string
 type param_info = string * string (* name, type *)
-type fun_info = string * string * string (* name, type, kind *)
+type fun_info = string * string * string (* name, kind, type *)
 type annotated_comment = AComm of string * fun_info * (param_info list) * (annotation_pair list)
 type function_definition = string (* CFun of return_type * fun_name * parameter list * fun_body *)
 type annotated_fun = AFun of annotated_comment * function_definition
@@ -33,7 +33,7 @@ let str_of_pair (p : annotation_pair) : string =
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with
-    | (name, ty, kind) ->
+    | (name, kind, ty) ->
       "Function name: " ^ name ^ " Return Type: " ^ ty ^ " Fun kind: " ^ kind
 
 let str_of_param (p : param_info) : string =

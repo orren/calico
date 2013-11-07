@@ -26,7 +26,7 @@ open Ast;;
 %token <Range.t> FUNSTART          /* fun info starter */
 %token <Range.t> PARAMSTART        /* param info starter */
 %token <Range.t * string> IDENT    /* identifier */
-
+%token <Range.t * string> STRLIT   /* string literal */
 
 /* ---------------------------------------------------------------------- */
 
@@ -45,7 +45,21 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines apairs   { AComm ($1, ("", "", ""), [], $2) }
+  | commlines finfo SEMI params apairs   { AComm ($1, $2, $4, $5) }
+
+finfo:
+  | FUNSTART LBRACE IDENT LSEP IDENT LSEP STRLIT RBRACE { (snd $3, snd $5, snd $7) }
+
+params:
+  | /* no parameters */               { [] }
+  | paramlist SEMI                    { List.rev $1 }
+
+paramlist:
+  | param                             { [$1] }
+  | paramlist SEMI param              { $3 :: $1 }
+
+param:
+  | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE { (snd $3, snd $5) }
 
 commlines:
   | COMMLINE                        { snd $1 }
