@@ -1,43 +1,10 @@
 # load "str.cma" ;;
 open Printf
 open List
-
-type funKind = Pure | SideEffect | PointReturn
-
-type property = { input_prop: (string * funKind) list; output_prop: string * funKind }
-type parameter = { param_type: string; param_name: string; is_pointer: bool }
-type annotatedFunction = { annotations: string; return_type: string; fun_kind: funKind; fun_name: string; parameters: parameter list; body: string; properties: property list }
-type sourceUnderTest = { file_name: string; top_source: string list; functions: annotatedFunction list }
+# use "../SUT_struct.ml" ;;
+# use "mock_SUT.ml" ;;
 
 let key_number : string = "9847"
-
-let prop1 : property = {input_prop = [("multiply_int_array(A, 2, length)", SideEffect);
-                                      ("length", Pure)] ;
-                                      output_prop = ("multiply_int(result, 2)", Pure)}
-let prop2 : property = {input_prop = [("multiply_int_array(A, -1, length)", SideEffect);
-                                      ("length", Pure)] ;
-                                      output_prop = ("multiply_int(result, -1)", Pure)}
-
-let fun1 : annotatedFunction = {annotations = "/**\n * Sums the elements of an array?\n *\n * @input-prop multiply(A, 2, length), length\n * @output-prop multiply_int(result, 2)\n */";
-        return_type = "int"; fun_kind = Pure; fun_name = "sum"; 
-        parameters = [ {param_type = "int"; param_name = "A"; is_pointer = true};
-                       {param_type = "int"; param_name = "length"; is_pointer = false} ] ;
-        body = "    int i, sum = 0;\n    for (i = 0; i < length; i++) sum += A[i];\n    return sum;" ; properties = [prop1; prop2]}
-
-let prop3 : property = {input_prop = [("multiply_double(a, -1)", Pure)];
-                        output_prop = ("multiply_int(result, 2)", Pure)}
-
-let fun2 : annotatedFunction = {annotations = "/**\n * Returns a pointer to a double that is the absolute value of a\n *\n * @input-prop multiply_double(a, -1)\n * @output-prop result\n */";
-        return_type = "double"; fun_kind = PointReturn; fun_name = "absolute";
-        parameters = [ {param_type = "double"; param_name = "a"; is_pointer = false} ] ;
-        body = "    double *answer = malloc(sizeof(int));\n    *answer = abs(a);\n    return answer;"
-        ; properties = [prop3]}
-
-(* TODO: certain includes will always be necessary. We must check the first element of top_source to make sure those includes are already present, otherwise we must add them *)
-let simpleTestSUT : sourceUnderTest = {
-    file_name = "simple_test" ;
-    top_source = ["#include <unistd.h>\n#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>"; "// some comment or whatever"] ;
-    functions = [fun1; fun2] }
 
 let rec repeat (s : string) (n : int) : string =
     if n <= 1 then s else s ^ (repeat s (n - 1))
@@ -67,7 +34,7 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
     end ;;
 
 let write_param (param : parameter) : string = 
-    param.param_type ^ (if param.is_pointer then " *" else " ") ^ param.param_name
+    param.param_type ^ " " ^ param.param_name
 
 let input_transformation (param : parameter) (prop : (string * funKind)) : string =
     "// < input_transformation\n        " ^
@@ -86,13 +53,12 @@ let call_inner_function (return_type : string) (fun_kind : funKind)
                         (fun_name : string) (params : parameter list) : string =
     let get_p_name (param : parameter) : string = param.param_name in
     let all_names = (map get_p_name params) in
-    "        // < call_inner_function\n        " ^
+    "// < call_inner_function\n        " ^
     begin match fun_kind with
     | Pure        -> "*result = __" ^ fun_name ^ "(" ^ String.concat ", " all_names ^ ")"
     | SideEffect  -> "__" ^ fun_name ^ "(" ^ String.concat ", " all_names ^ ")"
-    | PointReturn -> return_type ^ " *temp_f_result = __" ^ fun_name ^ "(" ^
-        String.concat ", " all_names ^ ");\n        memcpy(result, temp_f_result, sizeof(" ^
-        return_type ^ "))"
+    | PointReturn -> return_type ^ " temp_f_result = __" ^ fun_name ^ "(" ^
+        String.concat ", " all_names ^ ");\n        memcpy(result, temp_f_result, result_size)"
     end
     ^ ";\n// call_inner_function >\n"
 
@@ -100,7 +66,7 @@ let deref_var (s : string) (v : string) : string =
     Str.global_replace (Str.regexp v) ("*" ^ v) s
 
 let output_transformation (return_type : string) (prop : (string * funKind)): string =
-    "        // < output_transformation\n        " ^
+    "// < output_transformation\n        " ^
     begin match prop with
     | (prop_name, Pure)        -> "*result = " ^ (deref_var prop_name "result")
     | (prop_name, SideEffect)  -> prop_name
@@ -140,14 +106,7 @@ let property_assertion (fun_kind : funKind) (prop : property) (procNum : int) : 
     "    }\n"
 
 let original_function (f : annotatedFunction) : string =
-    f.return_type ^
-    begin match f.fun_kind with
-    | PointReturn -> "* __"
-    | Pure       -> " __"
-    | SideEffect -> " __"
-    end
-    ^ f.fun_name ^ "(" ^ String.concat ", " (map write_param f.parameters) ^ ") {\n" ^ f.body ^
-    "\n}\n\n"
+    f.return_type ^ " __" ^ f.fun_name ^ f.raw ^ "\n"
 
 let instrument_function (f : annotatedFunction) : string =
     (* each child process will have a number *)
@@ -156,11 +115,11 @@ let instrument_function (f : annotatedFunction) : string =
      (map (fun (param : parameter) -> param.param_name) f.parameters) in
 
     (* original version of the function with underscores *)
-    original_function f ^
+    original_function f ^ "\n" ^
 
     (* instrumented version *)
-    f.annotations ^ "\n" ^ f.return_type ^ (if f.fun_kind == PointReturn then "* " else " ") ^ 
-    f.fun_name ^ "(" ^ String.concat ", " (map write_param f.parameters) ^ ") {\n" ^
+    f.annotations ^ "\n" ^ f.return_type ^ " " ^ f.fun_name ^ "(" ^
+    String.concat ", " (map write_param f.parameters) ^ ") {\n" ^
 
     (* fork *)
     "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
@@ -169,8 +128,15 @@ let instrument_function (f : annotatedFunction) : string =
     "    int* shmids = malloc(numProps * sizeof(int));\n" ^
     "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
     "    int i;\n" ^
-    "    " ^ f.return_type ^ (if f.fun_kind = PointReturn then " *" else " ") ^ "orig_result;\n" ^
-    "    " ^ f.return_type ^ " *result;\n\n" ^
+    "    " ^ f.return_type ^ " orig_result = " ^
+    (if f.fun_kind = PointReturn then "NULL" else "0") ^
+    ";\n    " ^ f.return_type ^ 
+    begin match f.fun_kind with
+    | Pure -> "* result = 0"
+    | SideEffect -> ""
+    | PointReturn -> " result = NULL"
+    end
+    ^ ";\n\n" ^
     "    for (i = 0; i < numProps; i += 1) {\n" ^
     "        if (procNum == -1) {\n" ^
     "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
@@ -185,7 +151,7 @@ let instrument_function (f : annotatedFunction) : string =
     "    if (procNum == -1) {\n        " ^
     begin match f.fun_kind with
     | Pure        -> "orig_result = __" ^ call_to_inner
-    | PointReturn -> f.return_type ^ " *temp_orig_result = __" ^ call_to_inner ^
+    | PointReturn -> f.return_type ^ " temp_orig_result = __" ^ call_to_inner ^
                      ");\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ f.return_type ^
                      ")"
     | SideEffect  -> call_to_inner
