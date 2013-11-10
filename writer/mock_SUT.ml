@@ -1,3 +1,5 @@
+open SUT_struct
+
 let prop1 : property = {input_prop = [("multiply_int_array(A, 2, length)", SideEffect);
                                       ("length", Pure)] ;
                                       output_prop = ("multiply_int(result, 2)", Pure)}

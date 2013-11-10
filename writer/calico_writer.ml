@@ -1,8 +1,6 @@
-# load "str.cma" ;;
 open Printf
 open List
-# use "../SUT_struct.ml" ;;
-# use "mock_SUT.ml" ;;
+open SUT_struct
 
 let key_number : string = "9847"
 
@@ -22,7 +20,7 @@ let snd (tup : 'a * 'b) : 'b =
 let lbr (indent : int) : string =
     ";\n" ^ (repeat "    " indent)
 
-let rec range_list (i : int) (j : int) (acc : int list) : int list = 
+let rec range_list (i : int) (j : int) (acc : int list) : int list =
     if i > j then acc else range_list i (j - 1) (j :: acc)
 
 let rec merge (l1:'a list) (l2:'a list) : 'a list =
@@ -180,4 +178,4 @@ let write_source (source: sourceUnderTest) : unit =
         (String.concat "\n\n" (merge source.top_source instrumented));
         close_out out;
 
-;; write_source simpleTestSUT
+;; write_source Mock_SUT.simpleTestSUT
