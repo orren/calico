@@ -5,7 +5,7 @@ extern void exit(int);
 /**
  * May sum the elements of an array
  *
- * @fun-info { foo, sideEffect, "int" } ;
+ * @fun-info { sum, sideEffect, "int" } ;
  * @param-info { A, "int*" } ;
  * @param-info { length, "int" } ;
  * @input-prop multiply(A, two, length), id(length) ;

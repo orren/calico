@@ -35,7 +35,7 @@ build_yacc:
 	ocamlyacc srcparser.mly
 
 build: build_lex build_yacc
-	ocamlc -o pmain ast.ml $(INTERFACES) $(SOURCES) main.ml
+	ocamlc str.cma -o pmain ast.ml $(INTERFACES) $(SOURCES) main.ml
 
 run: build
 	./pmain

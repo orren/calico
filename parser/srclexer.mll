@@ -3,41 +3,6 @@
   open Srcparser
   open Lexutil
   open Range
-
-  let type_keywords = [
-    (* Keywords appearing in c types *)
-    ("auto", fun i s -> AUTO (i, s));
-    ("register", fun i s -> REGISTER (i, s));
-    ("static", fun i s -> STATIC (i, s));
-    ("extern", fun i s -> EXTERN (i, s));
-    ("typedef", fun i s -> TYPEDEF (i, s));
-    ("void", fun i s -> VOID (i, s));
-    ("char", fun i s -> CHAR (i, s));
-    ("short", fun i s -> SHORT (i, s));
-    ("int", fun i s -> INT (i, s));
-    ("long", fun i s -> LONG (i, s));
-    ("float", fun i s -> FLOAT (i, s));
-    ("double", fun i s -> DOUBLE (i, s));
-    ("signed", fun i s -> SIGNED (i, s));
-    ("unsigned", fun i s -> UNSIGNED (i, s));
-    ("const", fun i s -> CONST (i, s));
-    ("volatile", fun i s -> VOLATILE (i, s));
-    ("struct", fun i s -> STRUCT (i, s));
-    ("enum", fun i s -> ENUM (i, s));
-    ("union", fun i s -> UNION (i, s));
-  ]
-
-  type build_fun = Range.t -> string -> Srcparser.token
-  let (symbol_table : (string, build_fun) Hashtbl.t) = Hashtbl.create 1024
-  let _ =
-    List.iter (fun (str,f) -> Hashtbl.add symbol_table str f) type_keywords
-
-  let create_token lexbuf : Srcparser.token =
-    let str = lexeme lexbuf in
-    let r = lex_range lexbuf in
-    (Printf.printf "String to token: %s\n" str);
-    try (Hashtbl.find symbol_table str) r str
-    with _ -> IDENT (r, str)
 }
 
 (* Commonly used regex *)
@@ -57,20 +22,24 @@ let ident = idchar (idchar | digit)*
    Each token carries a Range.t value indicating its
    position in the file.
 *)
-rule token = parse
-  | eof                       { EOF }
-  | "{"                       { LBRACE   (lex_range lexbuf, lexeme lexbuf) }
-  | "}"                       { RBRACE   (lex_range lexbuf, lexeme lexbuf) }
-  | ";"                       { SEMI     (lex_range lexbuf, lexeme lexbuf) }
-  | ":"                       { COLON    (lex_range lexbuf, lexeme lexbuf) }
-  | "("                       { LPAREN   (lex_range lexbuf, lexeme lexbuf) }
-  | ")"                       { RPAREN   (lex_range lexbuf, lexeme lexbuf) }
-  | ","                       { COMMA    (lex_range lexbuf, lexeme lexbuf) }
-  | "*"                       { STAR     (lex_range lexbuf, lexeme lexbuf) }
-  | "."                       { DOT      (lex_range lexbuf, lexeme lexbuf) }
-  | "["                       { LBRACKET (lex_range lexbuf, lexeme lexbuf) }
-  | "]"                       { RBRACKET (lex_range lexbuf, lexeme lexbuf) }
-  | "="                       { EQUALS   (lex_range lexbuf, lexeme lexbuf) }
-  | whitespace+               { token lexbuf }
-  | idchar (idchar | digit)*  { create_token lexbuf }
-  | _ as c                    { unexpected_char lexbuf c }
+rule funparse = parse
+  | whitespace+        { funparse lexbuf }
+  | "("                { Printf.printf "Entering parenset at %d\n" lexbuf.lex_curr_pos;
+                         parenset 0 lexbuf }
+  | _ as c             { unexpected_char lexbuf c "Expected open paren after fun name" }
+and parenset depth = parse
+  | "("                { parenset (depth + 1) lexbuf }
+  | ")"                { Printf.printf "Closing parenset %d at %d\n" depth lexbuf.lex_curr_pos;
+                         if depth = 0
+                         then String.concat "" (List.rev (body 0 [] lexbuf))
+                         else parenset (depth - 1) lexbuf }
+  | _                  { parenset depth lexbuf }
+and body depth lst = parse
+  | "{"                { body (depth + 1) ("{"::lst) lexbuf }
+  | "}"                { Printf.printf "Closing brace set %d at %d\n" depth lexbuf.lex_curr_pos;
+                         if depth = 1
+                         then ("}"::lst)
+                         else body (depth - 1) ("}"::lst) lexbuf }
+  | _                  { body depth ((lexeme lexbuf)::lst) lexbuf }
+
+

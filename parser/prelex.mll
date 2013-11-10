@@ -21,8 +21,8 @@ rule prog_elements lst = parse
   | eof                 { List.rev lst }
   | src_char* as src    { prog_elements (SrcStr(src)::lst) lexbuf }
   | "/*"                { comment lst lexbuf }
-  | _ as c              { unexpected_char lexbuf c }
+  | _ as c              { unexpected_char lexbuf c "" }
 and comment lst = parse
   | com_char* as com    { comment (ComStr(com)::lst) lexbuf }
   | "*/"                { prog_elements lst lexbuf }
-  | _ as c              { unexpected_char lexbuf c }
+  | _ as c              { unexpected_char lexbuf c "" }

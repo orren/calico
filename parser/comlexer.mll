@@ -56,7 +56,7 @@ rule token = parse
   | '{'                                          { LBRACE (lex_range lexbuf) }
   | '}'                                          { RBRACE (lex_range lexbuf) }
   | ';'                                          { SEMI (lex_range lexbuf) }
-  | _ as c                                       { unexpected_char lexbuf c }
+  | _ as c                                       { unexpected_char lexbuf c "Error in comment lexer." }
 and str s = parse
   | [^ '"']* as s                                { str s lexbuf }
   | '"'                                          { s }
