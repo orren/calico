@@ -1,14 +1,12 @@
 INTERFACES =   \
 	range.mli  \
-	comparser.mli \
-	srcparser.mli
+	comparser.mli
 
 SOURCES =      \
 	../SUT_struct.ml \
 	range.ml   \
 	lexutil.ml \
 	prelex.ml  \
-	srcparser.ml \
 	srclexer.ml  \
 	comparser.ml  \
 	comlexer.ml
@@ -16,7 +14,6 @@ SOURCES =      \
 GEN_SOURCES =  \
 	comparser.ml \
 	comlexer.ml  \
-	srcparser.ml \
 	srclexer.ml  \
 	prelex.ml
 
@@ -32,7 +29,6 @@ build_lex:
 
 build_yacc:
 	ocamlyacc comparser.mly
-	ocamlyacc srcparser.mly
 
 build: build_lex build_yacc
 	ocamlc str.cma -o pmain ast.ml $(INTERFACES) $(SOURCES) main.ml
