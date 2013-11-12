@@ -17,7 +17,7 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
-let rec afuns_of_program (pelems: program_element list) : annotated_fun list =
+let rec afuns_of_program (pelems: annotated_program) : annotated_program =
   let pair_rec com_str src_str rest =
     try
       (Printf.printf "com_str: %s\n" com_str);
@@ -55,7 +55,7 @@ let parse (filename: string) (buf: Lexing.lexbuf) : unit =
     let prog_elements = Prelex.prog_elements [] buf in
     let afuns = afuns_of_program prog_elements in
     (* Printf.printf "Prelex result: \n%s\n" (str_of_prog prog_elements); *)
-    Printf.printf "Parse result: \n%s\n" (String.concat "\n" (List.map str_of_afun afuns))
+    Printf.printf "Parse result: \n%s\n" (String.concat "\n" (List.map str_of_pelem afuns))
   with Parsing.Parse_error ->
     failwith (Printf.sprintf "Parse error at %s."
         (Range.string_of_range (Lexutil.lex_range buf)))

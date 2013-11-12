@@ -31,7 +31,7 @@ build_yacc:
 	ocamlyacc comparser.mly
 
 build: build_lex build_yacc
-	ocamlc str.cma -o pmain ast.ml $(INTERFACES) $(SOURCES) main.ml
+	ocamlc str.cma -o pmain ast.ml $(INTERFACES) $(SOURCES) parsedriver.ml
 
 run: build
 	./pmain

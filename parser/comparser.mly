@@ -48,7 +48,9 @@ topprog:
   | commlines finfo SEMI params apairs   { AComm ($1, $2, $4, $5) }
 
 finfo:
-  | FUNSTART LBRACE IDENT LSEP IDENT LSEP STRLIT RBRACE { (snd $3, snd $5, snd $7) }
+  | FUNSTART LBRACE IDENT LSEP IDENT LSEP STRLIT RBRACE { (snd $3,
+                                                           KindStr(snd $5),
+                                                           TyStr(snd $7)) }
 
 params:
   | /* no parameters */               { [] }
@@ -59,7 +61,8 @@ paramlist:
   | paramlist SEMI param              { $3 :: $1 }
 
 param:
-  | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE { (snd $3, snd $5) }
+  | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE { (snd $3,
+                                                  TyStr(snd $5)) }
 
 commlines:
   | COMMLINE                        { snd $1 }
@@ -80,7 +83,7 @@ pannots:
   | pannot LSEP pannots             { $1 :: $3 }
 
 pannot:
-  | IDENT LPAREN exlist RPAREN      { ((snd $1), $3) }
+  | LBRACE IDENT RBRACE IDENT LPAREN exlist RPAREN { ((snd $4), KindStr(snd $2), $6) }
 
 exlist:
   | IDENT                           { [snd $1] }
