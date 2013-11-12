@@ -12,7 +12,8 @@ let whitespace = linewhitespace | nl
 
 let lowercase = ['a'-'z']
 let uppercase = ['A'-'Z']
-let digit = ['0'-'9']
+let pdigit = ['1'-'9']
+let digit = pdigit | ['0']
 let alphachar = uppercase | lowercase
 let idchar = alphachar | '_' (* start of a legal identifier *)
 let ident = idchar (idchar | digit)*
@@ -49,6 +50,7 @@ rule token = parse
   | (['*']? whitespace* fun_info) | fun_info     { FUNSTART  (lex_range lexbuf) }
   | (['*']? whitespace* param_info) | param_info { PARAMSTART (lex_range lexbuf) }
   | idchar (digit|idchar)*                       { IDENT (lex_range lexbuf, lexeme lexbuf) }
+  | pdigit (digit)*                              { NAT (lex_range lexbuf, lexeme lexbuf) }
   | '"'                                          { STRLIT (lex_range lexbuf, str "" lexbuf) }
   | ','                                          { LSEP (lex_range lexbuf) }
   | '('                                          { LPAREN (lex_range lexbuf) }

@@ -17,6 +17,7 @@ type token =
   | PARAMSTART of (Range.t)
   | IDENT of (Range.t * string)
   | STRLIT of (Range.t * string)
+  | NAT of (Range.t * string)
 
 val toplevel :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ast.annotated_comment

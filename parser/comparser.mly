@@ -27,6 +27,7 @@ open Ast;;
 %token <Range.t> PARAMSTART        /* param info starter */
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
+%token <Range.t * string> NAT      /* natural number */
 
 /* ---------------------------------------------------------------------- */
 
@@ -83,11 +84,15 @@ pannots:
   | pannot LSEP pannots             { $1 :: $3 }
 
 pannot:
-  | LBRACE IDENT RBRACE IDENT LPAREN exlist RPAREN { ((snd $4), KindStr(snd $2), $6) }
+  | LBRACE IDENT RBRACE IDENT LPAREN arglist RPAREN { ((snd $4), KindStr(snd $2), $6) }
 
-exlist:
-  | IDENT                           { [snd $1] }
-  | IDENT LSEP exlist               { (snd $1) :: $3 }
+arglist:
+  | arg                            { [$1] }
+  | arg LSEP arglist                { ($1) :: $3 }
+
+arg:
+  | IDENT {snd $1}
+  | NAT   {snd $1}
 
 outannot:
   | OUTSTART IDENT SEMI             { snd $2 }

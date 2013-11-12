@@ -17,45 +17,33 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
-let rec afuns_of_program (pelems: annotated_program) : annotated_program =
+let rec parse_of_program (pelems: annotated_program) : annotated_program =
   let pair_rec com_str src_str rest =
     try
-      (Printf.printf "com_str: %s\n" com_str);
+      (* (Printf.printf "com_str: %s\n" com_str); *)
       let (acomm: annotated_comment) =
         Comparser.toplevel Comlexer.token (Lexing.from_string com_str) in
-      (Printf.printf "Parsed comment: %s" (str_of_annot acomm));
-      (Printf.printf "src_str: %s\n" src_str);
+      (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm));
+      (Printf.printf "src_str: %s\n" src_str); *)
       let srcsplit = split_src acomm src_str in
-      (Printf.printf "split src: %s\n" srcsplit);
       let funbody = Srclexer.funparse (Lexing.from_string srcsplit) in
-      (Printf.printf "Function body: %s\n\n" funbody);
-      AFun (acomm, funbody) :: (afuns_of_program rest)
+      AFun (acomm, funbody) :: (parse_of_program rest)
     with Parsing.Parse_error ->
       (Printf.printf "A parsing error occured\n");
-      afuns_of_program rest
+      parse_of_program rest
   in
   begin match pelems with
-    | []     -> []
-    | h :: t -> begin match (h, t) with
-        | ( ComStr(com), SrcStr(src)::rest ) -> pair_rec com src rest
-        | ( _, _::rest )                     -> afuns_of_program t
-        | (_, []) -> []
-    end
+    | []                                 -> []
+    | ( ComStr(com)::SrcStr(src)::rest ) -> pair_rec com src rest
+    | ( h::rest )                        -> h :: (parse_of_program rest)
   end
 
-(* invoke the parser top level function using the generated
- * token function available in the lexer to create the
- * token stream.
- *)
-let parse (filename: string) (buf: Lexing.lexbuf) : unit =
-    (* Lexutil.reset_lexbuf filename buf; *)
-    (* Comparser.toplevel Comlexer.token buf *)
+(* Primary entry point for the parser *)
+let parse (filename: string) (buf: Lexing.lexbuf) : annotated_program =
   try
     Lexutil.reset_lexbuf filename buf;
-    let prog_elements = Prelex.prog_elements [] buf in
-    let afuns = afuns_of_program prog_elements in
-    (* Printf.printf "Prelex result: \n%s\n" (str_of_prog prog_elements); *)
-    Printf.printf "Parse result: \n%s\n" (String.concat "\n" (List.map str_of_pelem afuns))
+    let prog_prelex = Prelex.prog_elements [] buf in
+    parse_of_program prog_prelex
   with Parsing.Parse_error ->
     failwith (Printf.sprintf "Parse error at %s."
         (Range.string_of_range (Lexutil.lex_range buf)))
@@ -65,7 +53,8 @@ let parse_file () : unit =
   let ic = open_in fname in
   try
     Printf.printf "Parsing %s ... \n" fname;
-    parse fname (Lexing.from_channel ic)
+    let parsed_program = parse fname (Lexing.from_channel ic) in
+    Printf.printf "Parse result: \n%s\n" (str_of_prog parsed_program)
   with
     | Lexutil.Lexer_error (r,m) ->
       failwith (Printf.sprintf "Lexing error at %s: %s."
