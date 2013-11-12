@@ -39,9 +39,7 @@ let rec parse_of_program (pelems: annotated_program) : annotated_program =
   end
 
 (* Primary entry point for the parser *)
-let parse (fname: string) : annotated_program =
-  let ic = open_in fname in
-  let buf = Lexing.from_channel ic in
+let parse (fname: string) (buf: Lexing.lexbuf) : annotated_program =
   try
     Lexutil.reset_lexbuf fname buf;
     let prog_prelex = Prelex.prog_elements [] buf in
@@ -52,9 +50,12 @@ let parse (fname: string) : annotated_program =
 
 let parse_file (fname: string) : unit =
   try
+    let ic = open_in fname in
+    let buf = Lexing.from_channel ic in
     Printf.printf "Parsing %s ... \n" fname;
-    let parsed_program = parse fname in
-    Printf.printf "Parse result: \n%s\n" (str_of_prog parsed_program)
+    let parsed_program = parse fname buf in
+    Printf.printf "Parse result: \n%s\n" (str_of_prog parsed_program);
+    close_in ic
   with
     | Lexutil.Lexer_error (r,m) ->
       failwith (Printf.sprintf "Lexing error at %s: %s."
