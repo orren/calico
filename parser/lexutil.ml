@@ -23,6 +23,7 @@ let reset_lexbuf (filename:string) lexbuf : unit =
     pos_lnum = 1;
   }
 
-let unexpected_char lexbuf (c:char) : 'a =
+let unexpected_char lexbuf (c:char) (msg:string) : 'a =
   raise (Lexer_error (lex_range lexbuf,
-                      Printf.sprintf "Unexpected character: '%c'" c))
+                      Printf.sprintf "Unexpected character: '%c'. %s" c msg))
+

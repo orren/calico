@@ -4,14 +4,17 @@ extern void exit(int);
 
 /**
  * May sum the elements of an array
- * @input-prop multiply(A, two, length), id(length) ;
+ *
+ * @fun-info { sum, sideEffect, "int" } ;
+ * @param-info { A, "int*" } ;
+ * @param-info { length, "int" } ;
+ * @input-prop { PointReturn } multiply(A, 2, length), { Pure } id(length) ;
  * @output-prop double ;
- * @input-prop duplicate(A, length), double(length) ;
+ * @input-prop { PointReturn } duplicate(A, length), { Pure } double(length) ;
  * @output-prop double ;
  */
 int sum ( int arr [], int length ) {
-  int i = 0;
-  int r = 0;
+  int i = 0, r = 0;
   for (; i < length;) r += arr[i++];
   return r;
 }
