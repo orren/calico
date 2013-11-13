@@ -106,30 +106,37 @@ let property_assertion (fun_kind : funKind) (prop : property) (procNum : int) : 
 let original_function (f : annotatedFunction) : string =
     f.return_type ^ " __" ^ f.fun_name ^ f.raw ^ "\n"
 
-let instrument_function (f : annotatedFunction) : string =
+let instrument_function (f : program_element) : string =
+
+    begin match f with
+    | ComStr(s) -> s
+    | SrcStr(s) -> s
+    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, apairs),
+            funbody) ->
+
     (* each child process will have a number *)
-    let child_indexes = (range_list 0 ((length f.properties) - 1) []) in
-    let call_to_inner = f.fun_name ^ "(" ^ String.concat ", "
-     (map (fun (param : parameter) -> param.param_name) f.parameters) in
+    let child_indexes = (range_list 0 ((length apairs) - 1) []) in
+    let call_to_inner = name ^ "(" ^ String.concat ", "
+     (map fst params) in
 
     (* original version of the function with underscores *)
     original_function f ^ "\n" ^
 
     (* instrumented version *)
-    f.annotations ^ "\n" ^ f.return_type ^ " " ^ f.fun_name ^ "(" ^
-    String.concat ", " (map write_param f.parameters) ^ ") {\n" ^
+    comm_text ^ "\n" ^ ty ^ " " ^ name ^ "(" ^
+    String.concat ", " (map write_param params) ^ ") {\n" ^
 
     (* fork *)
     "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
-    "    size_t result_size = sizeof(" ^ f.return_type ^ ");\n" ^
-    "    int numProps = " ^ string_of_int (length f.properties) ^ ";\n" ^
+    "    size_t result_size = sizeof(" ^ ty ^ ");\n" ^
+    "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
     "    int* shmids = malloc(numProps * sizeof(int));\n" ^
     "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
     "    int i;\n" ^
-    "    " ^ f.return_type ^ " orig_result = " ^
-    (if f.fun_kind = PointReturn then "NULL" else "0") ^
-    ";\n    " ^ f.return_type ^ 
-    begin match f.fun_kind with
+    "    " ^ ty ^ " orig_result = " ^
+    (if k = PointReturn then "NULL" else "0") ^
+    ";\n    " ^ ty ^ 
+    begin match k with
     | Pure -> "* result = 0"
     | SideEffect -> ""
     | PointReturn -> " result = NULL"
@@ -147,10 +154,10 @@ let instrument_function (f : annotatedFunction) : string =
 
     (* parent runs original inputs and waits for children *)
     "    if (procNum == -1) {\n        " ^
-    begin match f.fun_kind with
+    begin match k with
     | Pure        -> "orig_result = __" ^ call_to_inner
-    | PointReturn -> f.return_type ^ " temp_orig_result = __" ^ call_to_inner ^
-                     ");\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ f.return_type ^
+    | PointReturn -> ty ^ " temp_orig_result = __" ^ call_to_inner ^
+                     ");\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ ty ^
                      ")"
     | SideEffect  -> call_to_inner
     end
@@ -163,17 +170,17 @@ let instrument_function (f : annotatedFunction) : string =
     String.concat "\n" (map (transformed_call f) child_indexes) ^ "\n" ^
 
     (* make assertions about the results *)
-    String.concat "\n" (map2 (property_assertion f.fun_kind) f.properties child_indexes) ^ "\n" ^
+    String.concat "\n" (map2 (property_assertion k) apairs child_indexes) ^ "\n" ^
 
     (* cleanup *)
     "    free(shmids);\n" ^
     "    return orig_result;\n" ^
     "}"
+    end
 
-let write_source (source: sourceUnderTest) : unit =
+let write_source (sut: sourceUnderTest) : unit =
     (* TODO: actually implement indentation tracking instead of just guessing *)
-    let out = open_out ("calico_" ^ source.file_name ^ ".c") in
-    let instrumented = map instrument_function source.functions in
+    let out = open_out ("calico_" ^ sut.file_name ^ ".c") in
         fprintf out "#include \"calico_prop_library.h\"\n%s\nint main () {\nreturn 0;\n}\n"
-        (String.concat "\n\n" (merge source.top_source instrumented));
+        String.concat "\n\n" map instrument_function sut.elements
         close_out out;

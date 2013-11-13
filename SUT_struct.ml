@@ -1,3 +1,5 @@
+open Ast
+
 type funKind = Pure | SideEffect | PointReturn
 
 type property = { input_prop: (string * funKind) list;
@@ -15,5 +17,4 @@ type annotatedFunction = { annotations: string;
                            properties: property list }
 
 type sourceUnderTest = { file_name: string;
-                         top_source: string list;
-                         functions: annotatedFunction list }
+                         elements: program_element list }
