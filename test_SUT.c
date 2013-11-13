@@ -11,9 +11,9 @@
  * @output-prop result
  */
 int sum(int *A, int length) {
-    int i, sum = 0;
-    for (i = 0; i < length; i++) sum += A[i];
-    return sum;
+  int i, sum = 0;
+  for (i = 0; i < length; i++) sum += A[i];
+  return sum;
 }
 
 /**
@@ -23,9 +23,13 @@ int sum(int *A, int length) {
  * @output-prop result
  */
 double *absolute(double a) {
-    double *answer = malloc(sizeof(int));
-    *answer = abs(a);
-    return answer;
+  double *answer = malloc(sizeof(int));
+  if (a < 0) {
+    *answer = -1 * a;
+  } else {
+    *answer = a;
+  }
+  return answer;
 };
 
 int main() {
@@ -39,6 +43,5 @@ int main() {
   double x = -15.5;
   double *y = absolute(x);
 
-  printf("absolute value of %f is %f", x, *y);
-  
+  printf("absolute value of %f is %f\n", x, *y);
 }

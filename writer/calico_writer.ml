@@ -1,6 +1,6 @@
 open Printf
 open List
-open SUT_struct
+(* open SUT_struct *)
 
 let key_number : string = "9847"
 
@@ -177,5 +177,3 @@ let write_source (source: sourceUnderTest) : unit =
         fprintf out "#include \"calico_prop_library.h\"\n%s\nint main () {\nreturn 0;\n}\n"
         (String.concat "\n\n" (merge source.top_source instrumented));
         close_out out;
-
-;; write_source Mock_SUT.simpleTestSUT
