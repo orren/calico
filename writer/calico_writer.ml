@@ -63,54 +63,68 @@ let output_transformation (return_type : string) (prop : (string * funKind)): st
     end
   ^ ";\n// output_transformation >\n"
 
-let input_transformation (param : param_info) (prop : (string * funKind)) : string =
-  begin match param with
-    | (param_name, TyStr(ty)) ->
+let input_transformation (param : param_info) (prop : param_annot) : string =
+  begin match (param, prop) with
+    | ((param_name, TyStr(ty)), (name, kind, inputs)) ->
+      let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
       "// < input_transformation\n        " ^
-        begin match prop with
-          | (prop_name, Pure)        -> (if param_name = prop_name then ""
-            else param_name ^ " = " ^ prop_name)
-          | (prop_name, SideEffect)  -> prop_name
-          | (prop_name, PointReturn) -> ty ^ " *temp_" ^ param_name ^ " = " ^
-            prop_name ^ ";\n        memcpy(" ^ param_name ^
-            ", temp_" ^ param_name ^ ", sizeof (" ^ ty ^
-            "))"
+        begin match kind with
+          | Pure -> if String.compare param_name name = 0
+                    then ""
+                    else param_name ^ " = " ^ prop_expr
+          | SideEffect  -> prop_expr
+          | PointReturn -> ty ^
+            " *temp_" ^ param_name ^ " = " ^ prop_expr ^
+            ";\n        memcpy(" ^ param_name ^ ", temp_" ^
+            param_name ^ ", sizeof (" ^ ty ^ "))"
         end
       ^ ";\n// input_transformation >"
   end
+
+let transform_of_properties (ty: string)
+    (params: param_info list) (apair: annotation_pair) : (string * string) =
+  match apair with
+    | APair(param_annots, out_annot) ->
+            let in_transform = String.concat ";\n        "
+              (map2 input_transformation params param_annots) ^ ";\n" in
+            let out_transform = output_transformation ty out_annot in
+            (in_transform, out_transform)
 
 (* Requires param and property list *)
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   begin match f with
     | AComm(_, (name, kind, TyStr(ty)), params, apairs) ->
+      let (in_transform, out_transform) = transform_of_properties ty params (nth apairs procNum) in
       "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
         "        int shmid = shmget(key + procNum, result_size, 0666);\n" ^
         "        result = shmat(shmid, NULL, 0);\n" ^
         (* apply input transformations *)
-        String.concat ";\n        "
-        (map2 input_transformation params (nth apairs procNum).input_prop) ^ ";\n" ^
+        in_transform ^
         (* run inner function *)
         (call_inner_function name kind ty params) ^
         (* apply output transformations *)
-        output_transformation f.return_type (nth f.properties procNum).output_prop ^
+        out_transform ^
         "        shmdt(result);\n" ^
         "        return 0;\n" ^
         "    }\n"
   end
 
-let property_assertion (fun_kind : funKind) (prop : property) (procNum : int) : string =
-  "    result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    if (" ^
+let property_assertion (fun_kind : funKind) (prop : annotation_pair) (procNum : int) : string =
+  begin match prop with
+    | APair (param_props, out_prop) ->
+      "    result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    if (" ^
     (* TODO: for compound data types, we need the tester to supply a notion of equality *)
-    begin match fun_kind with
-      | Pure        -> ""
-      | PointReturn -> "*"
-      | SideEffect  -> ""
-    end
-  ^ "orig_result != *result) {\n" ^
-    "        printf(\"a property has been violated:\\ninput_prop: " ^ 
-    (String.concat ", " (map fst prop.input_prop)) ^
-    "\\noutput_prop: " ^ fst prop.output_prop ^ "\");\n" ^
-    "    }\n"
+        begin match fun_kind with
+          | Pure        -> ""
+          | PointReturn -> "*"
+          | SideEffect  -> ""
+        end
+      ^ "orig_result != *result) {\n" ^
+        "        printf(\"a property has been violated:\\ninput_prop: " ^
+        (String.concat ", " (map name_of_param_annot param_props)) ^
+        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\");\n" ^
+        "    }\n"
+  end
 
 let instrument_function (f : program_element) : string =
   begin match f with
@@ -118,7 +132,8 @@ let instrument_function (f : program_element) : string =
     | SrcStr(s) -> s
     | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, apairs),
             funbody) ->
-
+      (* TODO: Don't do this: *)
+      let acomm = AComm(comm_text, (name, k, TyStr(ty)), params, apairs) in
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length apairs) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
@@ -170,7 +185,7 @@ let instrument_function (f : program_element) : string =
         "    }\n\n" ^
 
         (* children run transformed inputs and transform the result *)
-        String.concat "\n" (map (transformed_call f) child_indexes) ^ "\n" ^
+        String.concat "\n" (map (transformed_call acomm) child_indexes) ^ "\n" ^
 
         (* make assertions about the results *)
         String.concat "\n" (map2 (property_assertion k) apairs child_indexes) ^ "\n" ^
@@ -183,7 +198,7 @@ let instrument_function (f : program_element) : string =
 
 let write_source (sut: sourceUnderTest) : unit =
     (* TODO: actually implement indentation tracking instead of just guessing *)
-  let out = open_out ("calico_" ^ sut.file_name ^ ".c") in
+  let out = open_out (sut.file_name) in
   fprintf out "#include \"calico_prop_library.h\"\n%s\nint main () {\nreturn 0;\n}\n"
-    String.concat "\n\n" map instrument_function sut.elements
-    close_out out;
+    (String.concat "\n\n" (map instrument_function sut.elements));
+  close_out out;

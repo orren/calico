@@ -26,6 +26,14 @@ type program_element = SrcStr of string
 type sourceUnderTest = { file_name: string;
                          elements: program_element list }
 
+let name_of_param_annot (p: param_annot) : string =
+  match p with
+    | (name, _, _) -> name
+
+let name_of_out_annot (p: out_annot) : string =
+  match p with
+    | (name, _) -> name
+
 let str_of_kind (k: funKind) : string =
   match k with
     | PointReturn -> "PointReturn"
