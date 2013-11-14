@@ -9,9 +9,9 @@ extern void exit(int);
  * @param-info { A, "int*" } ;
  * @param-info { length, "int" } ;
  * @input-prop { PointReturn } multiply(A, 2, length), { Pure } id(length) ;
- * @output-prop double ;
+ * @output-prop { Pure } double ;
  * @input-prop { PointReturn } duplicate(A, length), { Pure } double(length) ;
- * @output-prop double ;
+ * @output-prop { Pure } double ;
  */
 int sum ( int arr [], int length ) {
   int i = 0, r = 0;

@@ -54,7 +54,6 @@ let parse_file (fname: string) (ic: in_channel) : sourceUnderTest =
     let buf = Lexing.from_channel ic in
     Printf.printf "Parsing %s ... \n" fname;
     let parsed_program = parse fname buf in
-    Printf.printf "Parse result: \n%s\n" (str_of_prog parsed_program);
     { file_name = fname;
       elements = parsed_program }
   with
@@ -63,5 +62,6 @@ let parse_file (fname: string) (ic: in_channel) : sourceUnderTest =
                   (Range.string_of_range r) m)
 
 ;; let ic = (open_in "sum_example.c") in
-   parse_file "sum_example.c" ic;
+   Printf.printf "Parse result: \n%s\n"
+     (str_of_prog (parse_file "sum_example.c" ic).elements);
    close_in ic

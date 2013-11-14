@@ -89,12 +89,12 @@ paramannot:
 
 arglist:
   | arg                            { [$1] }
-  | arg LSEP arglist                { ($1) :: $3 }
+  | arg LSEP arglist               { ($1) :: $3 }
 
 arg:
   | IDENT {snd $1}
   | NAT   {snd $1}
 
 outannot:
-  | OUTSTART IDENT SEMI             { snd $2 }
+  | OUTSTART LBRACE KIND RBRACE IDENT SEMI       { (snd $5, snd $3) }
 

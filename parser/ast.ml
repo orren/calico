@@ -11,16 +11,20 @@ type funKind = Pure
                | SideEffect
                | PointReturn
 type ty_str = TyStr of string
-type pannot = string * funKind * string list (* name, kind, input list *)
-type annotation_pair = APair of pannot list * string
+type param_annot = string * funKind * string list (* name, kind, input list *)
+type out_annot = string * funKind
+type annotation_pair = APair of param_annot list * out_annot
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
     string * fun_info * (param_info list) * (annotation_pair list)
-type function_definition = string (* CFun of return_type * fun_name * parameter list * fun_body *)
+type function_body = string
 type program_element = SrcStr of string
                        | ComStr of string
-                       | AFun of annotated_comment * function_definition
+                       | AFun of annotated_comment * function_body
+
+type sourceUnderTest = { file_name: string;
+                         elements: program_element list }
 
 let str_of_kind (k: funKind) : string =
   match k with
@@ -28,14 +32,14 @@ let str_of_kind (k: funKind) : string =
     | Pure -> "Pure"
     | SideEffect -> "SideEffect"
 
-let str_of_pannot (annot: pannot) : string =
+let str_of_pannot (annot: param_annot) : string =
   match annot with
     | (name, kind, lst) -> "CALL TO:  " ^ name ^ ", KIND:  " ^
       (str_of_kind kind) ^ "\n ARGS:  " ^ (String.concat ", " lst) ^ " "
 
 let str_of_pair (p: annotation_pair) : string =
   match p with
-    | APair (annot, str) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
 
 let str_of_funinfo (funinfo: fun_info) : string =
