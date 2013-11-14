@@ -3,6 +3,18 @@
   open Comparser
   open Lexutil
   open Range
+  open Ast
+
+  let find_kwd (buf: lexbuf) =
+    let lex_res = lexeme buf in
+    let lex_rng = lex_range buf in
+    if (compare lex_res "PointReturn") = 0
+    then KIND (lex_rng, PointReturn)
+    else if (compare lex_res "Pure") = 0
+    then KIND (lex_rng, Pure)
+    else if (compare lex_res "SideEffect") = 0
+    then KIND (lex_rng, SideEffect)
+    else IDENT (lex_rng, lex_res)
 }
 
 (* Commonly used regex *)
@@ -33,6 +45,7 @@ let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit
 let anychar = idchar | other_char
 let linechar = anychar | linewhitespace
 let other = anychar | whitespace
+let kind_str = "PointReturn" | "Pure" | "SideEffect"
 
 (* Returns a token of type as specified in parser.mly
 
@@ -49,7 +62,7 @@ rule token = parse
   | (['*']? whitespace* out_prop) | out_prop     { OUTSTART (lex_range lexbuf) }
   | (['*']? whitespace* fun_info) | fun_info     { FUNSTART  (lex_range lexbuf) }
   | (['*']? whitespace* param_info) | param_info { PARAMSTART (lex_range lexbuf) }
-  | idchar (digit|idchar)*                       { IDENT (lex_range lexbuf, lexeme lexbuf) }
+  | idchar (digit|idchar)*                       { find_kwd lexbuf }
   | pdigit (digit)*                              { NAT (lex_range lexbuf, lexeme lexbuf) }
   | '"'                                          { STRLIT (lex_range lexbuf, str "" lexbuf) }
   | ','                                          { LSEP (lex_range lexbuf) }

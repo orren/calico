@@ -17,7 +17,7 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
-let rec parse_of_program (pelems: annotated_program) : annotated_program =
+let rec parse_of_program (pelems: program_element list) : program_element list =
   let pair_rec com_str src_str rest =
     try
       (* (Printf.printf "com_str: %s\n" com_str); *)
@@ -29,7 +29,8 @@ let rec parse_of_program (pelems: annotated_program) : annotated_program =
       let funbody = Srclexer.funparse (Lexing.from_string srcsplit) in
       AFun (acomm, funbody) :: (parse_of_program rest)
     with Parsing.Parse_error ->
-      (Printf.printf "A parsing error occured\n");
+      (Printf.printf "A parsing error occured parsing the comment: %s\n"
+         com_str);
       parse_of_program rest
   in
   begin match pelems with
@@ -39,7 +40,7 @@ let rec parse_of_program (pelems: annotated_program) : annotated_program =
   end
 
 (* Primary entry point for the parser *)
-let parse (fname: string) (buf: Lexing.lexbuf) : annotated_program =
+let parse (fname: string) (buf: Lexing.lexbuf) : program_element list =
   try
     Lexutil.reset_lexbuf fname buf;
     let prog_prelex = Prelex.prog_elements [] buf in

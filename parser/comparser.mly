@@ -28,6 +28,7 @@ open Ast;;
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
 %token <Range.t * string> NAT      /* natural number */
+%token <Range.t * Ast.funKind> KIND    /* function kind */
 
 /* ---------------------------------------------------------------------- */
 
@@ -46,12 +47,12 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines finfo SEMI params apairs   { AComm ($1, $2, $4, $5) }
+  | commlines funinfo SEMI params apairs   { AComm ($1, $2, $4, $5) }
 
-finfo:
-  | FUNSTART LBRACE IDENT LSEP IDENT LSEP STRLIT RBRACE { (snd $3,
-                                                           KindStr(snd $5),
-                                                           TyStr(snd $7)) }
+funinfo:
+  | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE { (snd $3,
+                                                          snd $5,
+                                                          TyStr(snd $7)) }
 
 params:
   | /* no parameters */               { [] }
@@ -77,14 +78,14 @@ apair:
   | inannot SEMI outannot           { APair ($1, $3) }
 
 inannot:
-  | INSTART pannots                 { $2 }
+  | INSTART paramannots                 { $2 }
 
-pannots:
-  | pannot                          { [$1] }
-  | pannot LSEP pannots             { $1 :: $3 }
+paramannots:
+  | paramannot                          { [$1] }
+  | paramannot LSEP paramannots             { $1 :: $3 }
 
-pannot:
-  | LBRACE IDENT RBRACE IDENT LPAREN arglist RPAREN { ((snd $4), KindStr(snd $2), $6) }
+paramannot:
+  | LBRACE KIND RBRACE IDENT LPAREN arglist RPAREN { (snd $4, snd $2, $6) }
 
 arglist:
   | arg                            { [$1] }
