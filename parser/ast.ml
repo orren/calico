@@ -7,7 +7,9 @@
 
 (* Annotated C functions in context *)
 
-type funKind = Pure | SideEffect | PointReturn
+type funKind = Pure
+               | SideEffect
+               | PointReturn
 type ty_str = TyStr of string
 type pannot = string * funKind * string list (* name, kind, input list *)
 type annotation_pair = APair of pannot list * string
@@ -16,7 +18,9 @@ type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
     string * fun_info * (param_info list) * (annotation_pair list)
 type function_definition = string (* CFun of return_type * fun_name * parameter list * fun_body *)
-type program_element = SrcStr of string | ComStr of string | AFun of annotated_comment * function_definition
+type program_element = SrcStr of string
+                       | ComStr of string
+                       | AFun of annotated_comment * function_definition
 
 let str_of_kind (k: funKind) : string =
   match k with
