@@ -49,17 +49,19 @@ let parse (fname: string) (buf: Lexing.lexbuf) : program_element list =
     failwith (Printf.sprintf "Parse error at %s."
         (Range.string_of_range (Lexutil.lex_range buf)))
 
-let parse_file (fname: string) : unit =
+let parse_file (fname: string) (ic: in_channel) : sourceUnderTest =
   try
-    let ic = open_in fname in
     let buf = Lexing.from_channel ic in
     Printf.printf "Parsing %s ... \n" fname;
     let parsed_program = parse fname buf in
     Printf.printf "Parse result: \n%s\n" (str_of_prog parsed_program);
-    close_in ic
+    { file_name = fname;
+      elements = parsed_program }
   with
     | Lexutil.Lexer_error (r,m) ->
       failwith (Printf.sprintf "Lexing error at %s: %s."
                   (Range.string_of_range r) m)
-;;
-parse_file "sum_example.c"
+
+;; let ic = (open_in "sum_example.c") in
+   parse_file "sum_example.c" ic;
+   close_in ic

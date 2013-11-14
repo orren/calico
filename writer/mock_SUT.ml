@@ -1,5 +1,5 @@
 open SUT_struct
-
+(*
 let prop1 : property = {input_prop = [("multiply_int_array(A, 2, length)", SideEffect);
                                       ("length", Pure)] ;
                                       output_prop = ("multiply_int(result, 2)", Pure)}
@@ -27,3 +27,5 @@ let simpleTestSUT : sourceUnderTest = {
     file_name = "simple_test" ;
     top_source = ["#include <unistd.h>\n#include <sys/types.h>\n#include <sys/ipc.h>\n#include <sys/shm.h>\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <math.h>"; "// some comment or whatever"] ;
     functions = [fun1; fun2] }
+
+*)

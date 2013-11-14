@@ -1,7 +1,7 @@
 all: write compile run
 
 write: calico_writer.ml
-	ocamlc str.cma -I ../ -o cwriter ../SUT_struct.ml mock_SUT.ml calico_writer.ml
+	ocamlc str.cma -I ../ -I ../parser -o cwriter ../SUT_struct.ml mock_SUT.ml calico_writer.ml
 	./cwriter
 
 compile: calico_simple_test.c

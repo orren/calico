@@ -1,6 +1,6 @@
 open Printf
 open List
-(* open SUT_struct *)
+open Ast
 
 let key_number : string = "9847"
 
@@ -31,8 +31,9 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
     | ((n1 :: rest1), (n2 :: rest2)) -> n1 :: n2 :: (merge rest1 rest2)
     end ;;
 
-let write_param (param : parameter) : string = 
-    param.param_type ^ " " ^ param.param_name
+let write_param (param : param_info) : string =
+  match param with
+    | (name, TyStr(ty)) -> ty ^ " " ^ name
 
 let input_transformation (param : parameter) (prop : (string * funKind)) : string =
     "// < input_transformation\n        " ^
@@ -103,9 +104,6 @@ let property_assertion (fun_kind : funKind) (prop : property) (procNum : int) : 
             "\\noutput_prop: " ^ fst prop.output_prop ^ "\");\n" ^
     "    }\n"
 
-let original_function (f : annotatedFunction) : string =
-    f.return_type ^ " __" ^ f.fun_name ^ f.raw ^ "\n"
-
 let instrument_function (f : program_element) : string =
 
     begin match f with
@@ -118,13 +116,11 @@ let instrument_function (f : program_element) : string =
     let child_indexes = (range_list 0 ((length apairs) - 1) []) in
     let call_to_inner = name ^ "(" ^ String.concat ", "
      (map fst params) in
-
+    let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
     (* original version of the function with underscores *)
-    original_function f ^ "\n" ^
-
+    ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
     (* instrumented version *)
-    comm_text ^ "\n" ^ ty ^ " " ^ name ^ "(" ^
-    String.concat ", " (map write_param params) ^ ") {\n" ^
+    comm_text ^ "\n" ^ ty ^ " " ^ name ^ param_decl ^ " {\n" ^
 
     (* fork *)
     "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
