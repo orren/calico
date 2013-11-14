@@ -1,7 +1,5 @@
 open Ast
 
-type funKind = Pure | SideEffect | PointReturn
-
 type property = { input_prop: (string * funKind) list;
                   output_prop: string * funKind }
 

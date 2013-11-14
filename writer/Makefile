@@ -11,4 +11,4 @@ run: calico_simple_test
 	./calico_simple_test
 
 clean:
-	rm calico_simple_test calico_simple_test.c *.cm*
+	rm calico_simple_test calico_simple_test.c *.cm* cwriter

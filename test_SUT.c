@@ -16,6 +16,8 @@ int sum(int *A, int length) {
   return sum;
 }
 
+// This is a comment that should not be changed
+
 /**
  * Returns a pointer to a double that is the absolute value of a?
  *
@@ -31,6 +33,9 @@ double *absolute(double a) {
   }
   return answer;
 };
+
+// here's more stuff lol watchout
+
 
 int main() {
   
