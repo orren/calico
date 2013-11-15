@@ -159,7 +159,7 @@ let instrument_function (f : program_element) : string =
         ";\n    " ^ ty ^
         begin match k with
           | Pure -> "* result = 0"
-          | SideEffect -> ""
+          | SideEffect -> "" (* This case produces invalid code *)
           | PointReturn -> " result = NULL"
         end
       ^ ";\n\n" ^

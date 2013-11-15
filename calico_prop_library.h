@@ -3,9 +3,37 @@
 
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+// some comment or whatever
 
 int multiply_int(int a, int factor) {
   return a * factor;
+}
+
+int id(int n) {
+  return n;
+}
+
+int* duplicate(int *a, int length) {
+  int* res = malloc(sizeof(int) * (length * 2));
+  int i;
+  for (i = 0; i < length; i++) {
+    res[i] = a[i];
+  }
+  int j;
+  for (j = 0; j < length; j++, i++) {
+    res[j] = a[i];
+  }
+
+  return res;
 }
 
 void multiply_int_array(int *a, int factor, int length) {

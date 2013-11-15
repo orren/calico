@@ -5,10 +5,10 @@ extern void exit(int);
 /**
  * May sum the elements of an array
  *
- * @fun-info { sum, SideEffect, "int" } ;
+ * @fun-info { sum, Pure, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { PointReturn } multiply(arr, 2, length), { Pure } id(length) ;
+ * @input-prop { PointReturn } multiply_int_array(arr, 2, length), { Pure } id(length) ;
  * @output-prop { Pure } double ;
  * @input-prop { PointReturn } duplicate(arr, length), { Pure } double(length) ;
  * @output-prop { Pure } double ;

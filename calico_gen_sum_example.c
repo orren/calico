@@ -19,7 +19,7 @@ int sum(int* arr, int length) {
     int procNum = -1;
     int i;
     int orig_result = 0;
-    int;
+    int* result = 0;
 
     for (i = 0; i < numProps; i += 1) {
         if (procNum == -1) {
@@ -32,7 +32,7 @@ int sum(int* arr, int length) {
     }
 
     if (procNum == -1) {
-        sum(arr, length);
+        orig_result = __sum(arr, length);
         for (i = 0; i < numProps; i += 1) {
             wait(NULL);
         }
@@ -42,14 +42,14 @@ int sum(int* arr, int length) {
         int shmid = shmget(key + procNum, result_size, 0666);
         result = shmat(shmid, NULL, 0);
 // < input_transformation
-        int* *temp_arr = multiply(arr, 2, length);
+        int* *temp_arr = multiply_int_array(arr, 2, length);
         memcpy(arr, temp_arr, sizeof (int*));
 // input_transformation >;
         // < input_transformation
         length = id(length);
 // input_transformation >;
 // < call_inner_function
-        __sum(arr, length);
+        *result = __sum(arr, length);
 // call_inner_function >
 // < output_transformation
         *result = double;
@@ -69,7 +69,7 @@ int sum(int* arr, int length) {
         length = double(length);
 // input_transformation >;
 // < call_inner_function
-        __sum(arr, length);
+        *result = __sum(arr, length);
 // call_inner_function >
 // < output_transformation
         *result = double;
@@ -80,7 +80,7 @@ int sum(int* arr, int length) {
 
     result = shmat(shmids[0], NULL, 0);
     if (orig_result != *result) {
-        printf("a property has been violated:\ninput_prop: multiply, id\noutput_prop: double");
+        printf("a property has been violated:\ninput_prop: multiply_int_array, id\noutput_prop: double");
     }
 
     result = shmat(shmids[1], NULL, 0);
