@@ -8,7 +8,7 @@ extern void exit(int);
  * @fun-info { sum, Pure, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { PointReturn } multiply_int_array(arr, 2, length), { Pure } id(length) ;
+ * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id(length) ;
  * @output-prop { Pure } double_int ;
  * @input-prop { PointReturn } duplicate(arr, length), { Pure } double_int(length) ;
  * @output-prop { Pure } double_int ;

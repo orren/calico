@@ -35,8 +35,6 @@ let write_param (param : param_info) : string =
   match param with
     | (name, TyStr(ty)) -> ty ^ " " ^ name
 
-
-
 let call_inner_function (name: string) (kind: funKind) (ty: string) (params: param_info list) : string =
   let get_p_name = (fun p -> match p with (name, _) -> name) in
   let all_names = (map get_p_name params) in
