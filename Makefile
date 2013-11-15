@@ -9,7 +9,6 @@ SOURCES = \
 	parser/parsedriver.ml \
 	writer/calico_writer.ml
 
-
 GEN_SOURCES =  \
 	parser/comparser.ml \
 	parser/comlexer.ml  \
@@ -24,13 +23,11 @@ original: test_SUT.c
 
 rewrite: parser_pre test_SUT calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain $(SOURCES) calico.ml
-	./calicoMain parser/sum_example.c
+	./calicoMain sum_example.c
 
 clean: test_SUT.c
 	rm parser/*.cm* $(GEN_SOURCES)
 	rm ./test_SUT_original test_SUT
-
-clean:
 
 build_lex:
 	ocamllex parser/comlexer.mll

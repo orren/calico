@@ -142,7 +142,10 @@ let instrument_function (f : program_element) : string =
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
         (* instrumented version *)
-        comm_text ^ "\n" ^ ty ^ " " ^ name ^ param_decl ^ " {\n" ^
+        (* TODO: comm_text produces bad comments... would be most useful if
+           original annotations were included, or if left off entirely
+        comm_text ^ "\n" ^ *)
+        ty ^ " " ^ name ^ param_decl ^ " {\n" ^
 
         (* fork *)
         "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
@@ -197,8 +200,8 @@ let instrument_function (f : program_element) : string =
   end
 
 let write_source (sut: sourceUnderTest) : unit =
-    (* TODO: actually implement indentation tracking instead of just guessing *)
-  let out = open_out (sut.file_name) in
+  (* TODO: actually implement indentation tracking instead of just guessing *)
+  let out = open_out ("calico_gen_" ^ sut.file_name) in
   fprintf out "#include \"calico_prop_library.h\"\n%s\nint main () {\nreturn 0;\n}\n"
     (String.concat "\n\n" (map instrument_function sut.elements));
   close_out out;

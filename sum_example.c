@@ -3,12 +3,18 @@
 extern void exit(int);
 
 /**
- * @input-prop multiply(A, 2, length), id
- * @ouptut-prop double
+ * May sum the elements of an array
+ *
+ * @fun-info { sum, SideEffect, "int" } ;
+ * @param-info { arr, "int*" } ;
+ * @param-info { length, "int" } ;
+ * @input-prop { PointReturn } multiply(arr, 2, length), { Pure } id(length) ;
+ * @output-prop { Pure } double ;
+ * @input-prop { PointReturn } duplicate(arr, length), { Pure } double(length) ;
+ * @output-prop { Pure } double ;
  */
 int sum ( int arr [], int length ) {
-  int i = 0;
-  int r = 0;
+  int i = 0, r = 0;
   for (; i < length;) r += arr[i++];
   return r;
 }

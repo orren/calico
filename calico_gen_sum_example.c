@@ -5,17 +5,13 @@ extern void exit(int);
 
 
 
-int __sum(int* A, int length) {
+int __sum(int* arr, int length) {
   int i = 0, r = 0;
   for (; i < length;) r += arr[i++];
   return r;
 }
 
-*
- * May sum the elements of an array
- *
-
-int sum(int* A, int length) {
+int sum(int* arr, int length) {
     int key = 9847;
     size_t result_size = sizeof(int);
     int numProps = 2;
@@ -36,7 +32,7 @@ int sum(int* A, int length) {
     }
 
     if (procNum == -1) {
-        sum(A, length);
+        sum(arr, length);
         for (i = 0; i < numProps; i += 1) {
             wait(NULL);
         }
@@ -46,14 +42,14 @@ int sum(int* A, int length) {
         int shmid = shmget(key + procNum, result_size, 0666);
         result = shmat(shmid, NULL, 0);
 // < input_transformation
-        int* *temp_A = multiply(A, 2, length);
-        memcpy(A, temp_A, sizeof (int*));
+        int* *temp_arr = multiply(arr, 2, length);
+        memcpy(arr, temp_arr, sizeof (int*));
 // input_transformation >;
         // < input_transformation
         length = id(length);
 // input_transformation >;
 // < call_inner_function
-        __sum(A, length);
+        __sum(arr, length);
 // call_inner_function >
 // < output_transformation
         *result = double;
@@ -66,14 +62,14 @@ int sum(int* A, int length) {
         int shmid = shmget(key + procNum, result_size, 0666);
         result = shmat(shmid, NULL, 0);
 // < input_transformation
-        int* *temp_A = duplicate(A, length);
-        memcpy(A, temp_A, sizeof (int*));
+        int* *temp_arr = duplicate(arr, length);
+        memcpy(arr, temp_arr, sizeof (int*));
 // input_transformation >;
         // < input_transformation
         length = double(length);
 // input_transformation >;
 // < call_inner_function
-        __sum(A, length);
+        __sum(arr, length);
 // call_inner_function >
 // < output_transformation
         *result = double;
