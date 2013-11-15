@@ -15,7 +15,7 @@ GEN_SOURCES =  \
 	parser/srclexer.ml  \
 	parser/prelex.ml
 
-all: rewrite
+all: rewrite compile_gen
 
 original: test_SUT.c
 	gcc -Wall -o test_SUT_original test_SUT.c
@@ -24,6 +24,9 @@ original: test_SUT.c
 rewrite: parser_pre test_SUT calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain $(SOURCES) calico.ml
 	./calicoMain sum_example.c
+
+compile_gen:
+	gcc calico_gen_sum_example.c
 
 clean: test_SUT.c
 	rm parser/*.cm* $(GEN_SOURCES)

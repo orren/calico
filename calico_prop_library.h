@@ -22,6 +22,10 @@ int id(int n) {
   return n;
 }
 
+int double_int(int n) {
+  return n * 2;
+}
+
 int* duplicate(int *a, int length) {
   int* res = malloc(sizeof(int) * (length * 2));
   int i;

@@ -52,7 +52,7 @@ int sum(int* arr, int length) {
         *result = __sum(arr, length);
 // call_inner_function >
 // < output_transformation
-        *result = double;
+        *result = double_int;
 // output_transformation >
         shmdt(result);
         return 0;
@@ -66,13 +66,13 @@ int sum(int* arr, int length) {
         memcpy(arr, temp_arr, sizeof (int*));
 // input_transformation >;
         // < input_transformation
-        length = double(length);
+        length = double_int(length);
 // input_transformation >;
 // < call_inner_function
         *result = __sum(arr, length);
 // call_inner_function >
 // < output_transformation
-        *result = double;
+        *result = double_int;
 // output_transformation >
         shmdt(result);
         return 0;
@@ -80,12 +80,12 @@ int sum(int* arr, int length) {
 
     result = shmat(shmids[0], NULL, 0);
     if (orig_result != *result) {
-        printf("a property has been violated:\ninput_prop: multiply_int_array, id\noutput_prop: double");
+        printf("a property has been violated:\ninput_prop: multiply_int_array, id\noutput_prop: double_int");
     }
 
     result = shmat(shmids[1], NULL, 0);
     if (orig_result != *result) {
-        printf("a property has been violated:\ninput_prop: duplicate, double\noutput_prop: double");
+        printf("a property has been violated:\ninput_prop: duplicate, double_int\noutput_prop: double_int");
     }
 
     free(shmids);
