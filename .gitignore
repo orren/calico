@@ -3,5 +3,6 @@
 *\#*
 *.cm*
 *.out
+calicoMain
 calico_gen*
 test_SUT_original
