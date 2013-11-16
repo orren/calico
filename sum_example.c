@@ -21,6 +21,7 @@ int sum ( int arr [], int length ) {
 
 int main () {
   int arr [] = {1, 2, 3};
-  printf("*** The sum is : %d\n", sum(arr, 3));
+  int x = sum(arr, 3);
+  printf("*** The sum is : %d\n", x);
   exit(0);
 }

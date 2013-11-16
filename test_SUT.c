@@ -4,13 +4,15 @@
 /**
  * Sums the elements of an array?
  *
- * @input-prop multiply(A, 2, length), length
- * @output-prop multiply_int(result, 2)
- *
- * @input-prop permute(A), length
- * @output-prop result
+ * @fun-info { sum, Pure, "int" } ;
+ * @param-info { arr, "int*" } ;
+ * @param-info { length, "int" } ;
+ * @input-prop { SideEffect } multiply_int_array(A, 2, length), { Pure } length ;
+ * @output-prop { Pure } multiply_int(result, 2) ;
+ * @input-prop { SideEffect } permute(A), { Pure } length ;
+ * @output-prop { Pure } result ;
  */
-int sum(int *A, int length) {
+int sum(int *arr, int length) {
   int i, sum = 0;
   for (i = 0; i < length; i++) sum += A[i];
   return sum;
@@ -21,8 +23,10 @@ int sum(int *A, int length) {
 /**
  * Returns a pointer to a double that is the absolute value of a?
  *
- * @input-prop multiply_double(a, -1)
- * @output-prop result
+ * @fun-info { absolute, PointReturn, "double *" } ;
+ * @param-info { a, "double"} ;
+ * @input-prop { Pure } multiply_double(a, -1) ;
+ * @output-prop { Pure } result ;
  */
 double *absolute(double a) {
   double *answer = malloc(sizeof(int));

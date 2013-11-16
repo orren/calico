@@ -39,6 +39,7 @@ run_SUT: build_main test_SUT.c
 run_sum: build_main sum_example.c
 	./calicoMain sum_example.c
 	gcc -Wall -o calico_gen_sum_example calico_gen_sum_example.c
+	./calico_gen_sum_example
 
 clean: test_SUT.c sum_example.c
 	rm parser/*.cm* $(GEN_SOURCES)
