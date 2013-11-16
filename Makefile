@@ -21,7 +21,7 @@ GEN_SOURCES =  \
 
 all: rewrite compile_gen
 
-original: test_SUT.c
+compile_original: test_SUT.c
 	gcc -Wall -o test_SUT_original test_SUT.c
 	./test_SUT_original
 
@@ -30,7 +30,8 @@ rewrite: parser_pre test_SUT calico.ml
 	./calicoMain sum_example.c
 
 compile_gen:
-	gcc calico_gen_sum_example.c
+	gcc -Wall -o calico_gen_sum_example calico_gen_sum_example.c
+	./calico_gen_sum_example
 
 clean: test_SUT.c
 	rm parser/*.cm* $(GEN_SOURCES)
