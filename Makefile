@@ -19,7 +19,7 @@ GEN_SOURCES =  \
 	parser/srclexer.ml  \
 	parser/prelex.ml
 
-all: build_main comp_SUT comp_sum run_SUT run_sum
+all_sum: build_main rwr_sum run_sum
 
 build_main: parser_pre calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain parser/ast.ml $(INTERFACES) $(SOURCES) calico.ml
@@ -32,14 +32,19 @@ comp_sum: sum_example.c
 	gcc -Wall -o sum_example_original sum_example.c
 	./sum_example_original
 
-run_SUT: build_main test_SUT.c
+rwr_SUT: build_main test_SUT.c
 	./calicoMain test_SUT.c
-	gcc -Wall -o calico_gen_test_SUT calico_gen_test_SUT.c
 
-run_sum: build_main sum_example.c
+rwr_sum: build_main sum_example.c
 	./calicoMain sum_example.c
+
+run_SUT:
+	gcc -Wall -o calico_gen_test_SUT calico_gen_test_SUT.c
+	./calico_gen_test_SUT
+
+run_sum:
 	gcc -Wall -o calico_gen_sum_example calico_gen_sum_example.c
-	./calico_gen_sum_example
+	./calico_gen_sum_example	
 
 clean: test_SUT.c sum_example.c
 	rm parser/*.cm* $(GEN_SOURCES)

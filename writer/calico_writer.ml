@@ -103,7 +103,7 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
         (* apply output transformations *)
         out_transform ^
         "        shmdt(result);\n" ^
-        "        return 0;\n" ^
+        "        exit(0);\n" ^
         "    }\n"
   end
 
@@ -120,7 +120,7 @@ let property_assertion (fun_kind : funKind) (prop : annotation_pair) (procNum : 
       ^ "orig_result != *result) {\n" ^
         "        printf(\"a property has been violated:\\ninput_prop: " ^
         (String.concat ", " (map name_of_param_annot param_props)) ^
-        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\");\n" ^
+        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\\n\");\n" ^
         "    }\n"
   end
 
@@ -164,10 +164,10 @@ let instrument_function (f : program_element) : string =
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
         "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
-        "            fork();\n" ^
-        "        } else {\n" ^
-        "            procNum = i;\n" ^
-        "            break;\n" ^
+        "            if (0 == fork()) {\n" ^
+        "                procNum = i;\n" ^
+        "                break;\n" ^
+        "            }\n" ^
         "        }\n" ^
         "    }\n\n" ^
 
