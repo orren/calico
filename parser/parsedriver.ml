@@ -60,10 +60,3 @@ let parse_file (fname: string) (ic: in_channel) : sourceUnderTest =
     | Lexutil.Lexer_error (r,m) ->
       failwith (Printf.sprintf "Lexing error at %s: %s."
                   (Range.string_of_range r) m)
-
-(*
-;; let ic = (open_in "sum_example.c") in
-   Printf.printf "Parse result: \n%s\n"
-     (str_of_prog (parse_file "sum_example.c" ic).elements);
-   close_in ic
-*)

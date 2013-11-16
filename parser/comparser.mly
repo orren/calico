@@ -92,9 +92,18 @@ arglist:
   | arg LSEP arglist               { ($1) :: $3 }
 
 arg:
-  | IDENT {snd $1}
-  | NAT   {snd $1}
+  | IDENT    {snd $1}
+  | NAT      {snd $1}
+  | STRLIT   {snd $1}
 
 outannot:
+  /* single identifier */
   | OUTSTART LBRACE KIND RBRACE IDENT SEMI       { (snd $5, snd $3) }
+  /* a string literal */
+  | OUTSTART LBRACE KIND RBRACE STRLIT SEMI      { (snd $5, snd $3) }
+  /* call to a function */
+  | OUTSTART LBRACE KIND RBRACE funcall SEMI     { ($5, snd $3) }
 
+/* recognize a function call, emit the whole thing as a string */
+funcall:
+  | IDENT LPAREN arglist RPAREN { (snd $1) ^ "(" ^ (String.concat ", " $3) ^ ")" }
