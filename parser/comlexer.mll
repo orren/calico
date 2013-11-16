@@ -36,15 +36,10 @@ let param_info = ['@'] whitespace* "param-info"
 let in_prop  = ['@'] whitespace* "input-prop"
 let out_prop = ['@'] whitespace* "output-prop"
 
-let com_char = (['*'] [^ '/'] | idchar)
+(* Other characters we care about... *)
+let com_char = (['*'] [^ '/'] | ['?' '\\' '!' '"' '\'' '#' '<' '>' '.' '0'-'9' 'a'-'z' 'A'-'Z'])
 let com_line = linewhitespace* ('*' | (com_char | linewhitespace)*) nl
 
-(* Other characters we care about... *)
-let other_char = ['/' '\\' '!' ';' '"' '\'' '#' '*' '<' '>' '.'] | digit
-
-let anychar = idchar | other_char
-let linechar = anychar | linewhitespace
-let other = anychar | whitespace
 let kind_str = "PointReturn" | "Pure" | "SideEffect"
 
 (* Returns a token of type as specified in parser.mly
@@ -55,15 +50,15 @@ let kind_str = "PointReturn" | "Pure" | "SideEffect"
 rule token = parse
   | eof                                          { EOF }
   | whitespace+                                  { token lexbuf }  (* skip whitespace *)
-  | "/*"                                         { COPEN (lex_range lexbuf) }
+  | "/*" ['*']?                                  { COPEN (lex_range lexbuf) }
   | ['*']? "*/"                                  { CCLOS (lex_range lexbuf) }
-  | com_line                                     { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | (['*']? whitespace* in_prop) | in_prop       { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop     { OUTSTART (lex_range lexbuf) }
   | (['*']? whitespace* fun_info) | fun_info     { FUNSTART  (lex_range lexbuf) }
   | (['*']? whitespace* param_info) | param_info { PARAMSTART (lex_range lexbuf) }
   | idchar (digit|idchar)*                       { find_kwd lexbuf }
-  | pdigit (digit)*                              { NAT (lex_range lexbuf, lexeme lexbuf) }
+  | ['-']? pdigit (digit)*                       { INT (lex_range lexbuf, lexeme lexbuf) }
+  | com_line                                     { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | '"'                                          { STRLIT (lex_range lexbuf, str "" lexbuf) }
   | ','                                          { LSEP (lex_range lexbuf) }
   | '('                                          { LPAREN (lex_range lexbuf) }

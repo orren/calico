@@ -19,7 +19,7 @@ GEN_SOURCES =  \
 	parser/srclexer.ml  \
 	parser/prelex.ml
 
-all: clean build_main comp_SUT comp_sum run_SUT run_sum
+all: build_main comp_SUT comp_sum run_SUT run_sum
 
 build_main: parser_pre calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain parser/ast.ml $(INTERFACES) $(SOURCES) calico.ml

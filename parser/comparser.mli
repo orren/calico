@@ -17,7 +17,7 @@ type token =
   | PARAMSTART of (Range.t)
   | IDENT of (Range.t * string)
   | STRLIT of (Range.t * string)
-  | NAT of (Range.t * string)
+  | INT of (Range.t * string)
   | KIND of (Range.t * Ast.funKind)
 
 val toplevel :

@@ -27,7 +27,7 @@ open Ast;;
 %token <Range.t> PARAMSTART        /* param info starter */
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
-%token <Range.t * string> NAT      /* natural number */
+%token <Range.t * string> INT      /* integer */
 %token <Range.t * Ast.funKind> KIND    /* function kind */
 
 /* ---------------------------------------------------------------------- */
@@ -93,7 +93,7 @@ arglist:
 
 arg:
   | IDENT    {snd $1}
-  | NAT      {snd $1}
+  | INT      {snd $1}
   | STRLIT   {snd $1}
 
 outannot:

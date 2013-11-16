@@ -17,7 +17,7 @@ GEN_SOURCES =  \
 	srclexer.ml  \
 	prelex.ml
 
-all: clean run
+all: run
 
 clean:
 	rm *.cm* pmain $(GEN_SOURCES)
