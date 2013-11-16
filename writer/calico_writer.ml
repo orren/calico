@@ -165,8 +165,8 @@ let instrument_function (f : program_element) : string =
         "        if (procNum == -1) {\n" ^
         "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
         "            fork();\n" ^
-        "            procNum = i;\n" ^
         "        } else {\n" ^
+        "            procNum = i;\n" ^
         "            break;\n" ^
         "        }\n" ^
         "    }\n\n" ^
