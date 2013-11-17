@@ -21,6 +21,8 @@ GEN_SOURCES =  \
 
 all_sum: build_main rwr_sum run_sum
 
+all_SUT: build_main rwr_SUT run_SUT
+
 build_main: parser_pre calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain parser/ast.ml $(INTERFACES) $(SOURCES) calico.ml
 

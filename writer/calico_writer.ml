@@ -74,7 +74,7 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
           | PointReturn -> ty ^
             " temp_" ^ param_name ^ " = " ^ prop_expr ^
             ";\n        memcpy(" ^ param_name ^ ", temp_" ^
-            param_name ^ ", sizeof (" ^ ty ^ "))"
+            param_name ^ ", sizeof(" ^ ty ^ "))"
         end
       ^ ";\n// input_transformation >"
   end
@@ -151,7 +151,7 @@ let instrument_function (f : program_element) : string =
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length apairs) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
-        (map fst params) in
+        (map fst params)^ ")" in
       let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
@@ -192,10 +192,10 @@ let instrument_function (f : program_element) : string =
         begin match k with
           | Pure        -> "orig_result = __" ^ call_to_inner
           | PointReturn -> ty ^ " temp_orig_result = __" ^ call_to_inner ^
-            ");\n        memcpy(orig_result, temp_orig_result, result_size)"
+            ";\n        memcpy(orig_result, temp_orig_result, result_size)"
           | SideEffect  -> call_to_inner
         end
-        ^ ");\n        for (i = 0; i < numProps; i += 1) {\n" ^
+        ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
         "            wait(NULL);\n" ^
         "        }\n" ^
         "    }\n\n" ^
