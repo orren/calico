@@ -40,24 +40,24 @@ let call_inner_function (name: string) (kind: funKind) (ty: string) (params: par
   let all_names = (map get_p_name params) in
   "// < call_inner_function\n        " ^
     begin match kind with
-      | Pure        -> "*result = __" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
+      | Pure        -> "*t_result = __" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
       | SideEffect  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
-      | PointReturn -> ty ^ " temp_f_result = __" ^ name ^ "(" ^
-        String.concat ", " all_names ^ ");\n        memcpy(result, temp_f_result, result_size)"
+      | PointReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
+        String.concat ", " all_names ^ ");\n        memcpy(t_result, temp_t_result, result_size)"
     end
   ^ ";\n// call_inner_function >\n"
 
 let deref_var (s : string) (v : string) : string =
-  Str.global_replace (Str.regexp v) ("*" ^ v) s
+  Str.global_replace (Str.regexp v) "orig_result" s
 
 let output_transformation (return_type : string) (prop : (string * funKind)): string =
-  "// < output_transformation\n        " ^
+  "// < output_transformation\n    " ^
     begin match prop with
-      | (prop_name, Pure)        -> "*result = " ^ (deref_var prop_name "result")
+      | (prop_name, Pure)        -> "g_result = " ^ (deref_var prop_name "result")
       | (prop_name, SideEffect)  -> prop_name
-      | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^ prop_name ^
-        ";\n        memcpy(result, temp_g_result, sizeof(" ^
-        return_type ^ "))"
+      | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
+        (deref_var prop_name "result") ^
+        ";\n        memcpy(&g_result, temp_g_result, result_size)"
     end
   ^ ";\n// output_transformation >\n"
 
@@ -93,35 +93,51 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
   begin match f with
     | AComm(_, (name, kind, TyStr(ty)), params, apairs) ->
       let (in_transform, out_transform) = transform_of_properties ty params (nth apairs procNum) in
-      "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
+        "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
         "        int shmid = shmget(key + procNum, result_size, 0666);\n" ^
-        "        result = shmat(shmid, NULL, 0);\n" ^
+        "        t_result = shmat(shmid, NULL, 0);\n" ^
         (* apply input transformations *)
         in_transform ^
         (* run inner function *)
         (call_inner_function name kind ty params) ^
         (* apply output transformations *)
-        out_transform ^
-        "        shmdt(result);\n" ^
+        "        shmdt(t_result);\n" ^
         "        exit(0);\n" ^
         "    }\n"
   end
 
-let property_assertion (fun_kind : funKind) (prop : annotation_pair) (procNum : int) : string =
+let fprint_results (fun_kind : funKind) (return_type : string) : string =
+  let indicator = begin match return_type with
+                  | "int"    -> "%d"
+                  | "double" -> "%f"
+                  | "float"  -> "%f"
+                  | _        -> ""
+                  end in
+  begin match indicator with
+  | "" -> ""
+  | _  -> "        printf(\"g(f(x)): " ^ indicator ^ "\\nf(t(x)): " ^ indicator ^
+          "\\n\", g_result, *t_result);"
+  end
+
+let property_assertion (return_type : string) (fun_kind : funKind)
+                       (prop : annotation_pair) (procNum : int) : string =
   begin match prop with
     | APair (param_props, out_prop) ->
-      "    result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    if (" ^
+      "    t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    " ^
+      output_transformation return_type out_prop ^
+      "    if (" ^
     (* TODO: for compound data types, we need the tester to supply a notion of equality *)
         begin match fun_kind with
-          | Pure        -> ""
           | PointReturn -> "*"
+          | Pure        -> ""
           | SideEffect  -> ""
         end
-      ^ "orig_result != *result) {\n" ^
+      ^ "g_result != *t_result) {\n" ^
         "        printf(\"a property has been violated:\\ninput_prop: " ^
         (String.concat ", " (map name_of_param_annot param_props)) ^
-        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\\n\");\n" ^
-        "    }\n"
+        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
+        fprint_results fun_kind return_type ^
+        "\n    }\n"
   end
 
 let instrument_function (f : program_element) : string =
@@ -154,13 +170,13 @@ let instrument_function (f : program_element) : string =
         "    int i;\n" ^
         "    " ^ ty ^ " orig_result = " ^
         (if k = PointReturn then "NULL" else "0") ^
-        ";\n    " ^ ty ^
         begin match k with
-          | Pure -> "* result = 0"
+          | Pure -> ";\n    " ^ ty ^ "* t_result = 0;\n    " ^ ty ^ " g_result = 0"
           | SideEffect -> "" (* This case produces invalid code *)
-          | PointReturn -> " result = NULL"
+          | PointReturn -> ";\n    " ^ ty ^ " t_result = NULL;\n    " ^
+                                       ty ^ " g_result = NULL;"
         end
-      ^ ";\n\n" ^
+        ^ ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
         "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
@@ -176,11 +192,10 @@ let instrument_function (f : program_element) : string =
         begin match k with
           | Pure        -> "orig_result = __" ^ call_to_inner
           | PointReturn -> ty ^ " temp_orig_result = __" ^ call_to_inner ^
-            ");\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ ty ^
-            ")"
+            ");\n        memcpy(orig_result, temp_orig_result, result_size)"
           | SideEffect  -> call_to_inner
         end
-      ^ ");\n        for (i = 0; i < numProps; i += 1) {\n" ^
+        ^ ");\n        for (i = 0; i < numProps; i += 1) {\n" ^
         "            wait(NULL);\n" ^
         "        }\n" ^
         "    }\n\n" ^
@@ -189,7 +204,7 @@ let instrument_function (f : program_element) : string =
         String.concat "\n" (map (transformed_call acomm) child_indexes) ^ "\n" ^
 
         (* make assertions about the results *)
-        String.concat "\n" (map2 (property_assertion k) apairs child_indexes) ^ "\n" ^
+        String.concat "\n" (map2 (property_assertion ty k) apairs child_indexes) ^ "\n" ^
 
         (* cleanup *)
         "    free(shmids);\n" ^
