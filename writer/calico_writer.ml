@@ -162,7 +162,7 @@ let instrument_function (f : program_element) : string =
 
         (* fork *)
         "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
-        "    size_t result_size = sizeof(" ^ ty ^ ");\n" ^
+        "    size_t result_size = sizeof(" ^ (Str.global_replace (Str.regexp "*") "" ty) ^ ");\n" ^
         "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
         "    int* shmids = malloc(numProps * sizeof(int));\n" ^
         "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
@@ -173,7 +173,7 @@ let instrument_function (f : program_element) : string =
           | Pure -> ";\n    " ^ ty ^ "* t_result = 0;\n    " ^ ty ^ " g_result = 0"
           | SideEffect -> "" (* This case produces invalid code *)
           | PointReturn -> ";\n    " ^ ty ^ " t_result = NULL;\n    " ^
-                                       ty ^ " g_result = NULL;"
+                                       ty ^ " g_result = NULL"
         end
         ^ ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
