@@ -93,8 +93,7 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
     | AComm(_, (name, kind, TyStr(ty)), params, apairs) ->
       let (in_transform, out_transform) = transform_of_properties ty params (nth apairs procNum) in
         "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
-        "        int shmid = shmget(key + procNum, result_size, 0666);\n" ^
-        "        t_result = shmat(shmid, NULL, 0);\n" ^
+        "        t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
         (* apply input transformations *)
         in_transform ^
         (* run inner function *)
@@ -161,14 +160,13 @@ let instrument_function (f : program_element) : string =
         ty ^ " " ^ name ^ param_decl ^ " {\n" ^
 
         (* fork *)
-        "    int key = " ^ key_number ^ ";\n" ^ (* why this number? *)
         "    size_t result_size = sizeof(" ^ (Str.global_replace (Str.regexp "*") "" ty) ^ ");\n" ^
         "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
         "    int* shmids = malloc(numProps * sizeof(int));\n" ^
         "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
         "    int i;\n" ^
         "    " ^ ty ^ " orig_result = " ^
-        (if k = PointReturn then "NULL" else "0") ^
+        (if k = PointReturn then "malloc(result_size)" else "0") ^
         begin match k with
           | Pure -> ";\n    " ^ ty ^ "* t_result = 0;\n    " ^ ty ^ " g_result = 0"
           | SideEffect -> "" (* This case produces invalid code *)
@@ -178,7 +176,7 @@ let instrument_function (f : program_element) : string =
         ^ ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
-        "            shmids[i] = shmget(key + i, result_size, IPC_CREAT | 0666);\n" ^
+        "            shmids[i] = shmget(key++, result_size, IPC_CREAT | 0666);\n" ^
         "            if (0 == fork()) {\n" ^
         "                procNum = i;\n" ^
         "                break;\n" ^

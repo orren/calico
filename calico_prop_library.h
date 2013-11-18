@@ -12,7 +12,7 @@
 #include <string.h>
 #include <math.h>
 
-// some comment or whatever
+int key = 8947;
 
 int multiply_int(int a, int factor) {
   return a * factor;

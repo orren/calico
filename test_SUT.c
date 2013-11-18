@@ -36,7 +36,7 @@ double *absolute(double a) {
     *answer = a;
   }
   return answer;
-};
+}
 
 // here's more stuff lol watchout
 
