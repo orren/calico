@@ -29,12 +29,13 @@ int double_int(int n) {
 int* duplicate(int *a, int length) {
   int* res = malloc(sizeof(int) * (length * 2));
   int i;
+
   for (i = 0; i < length; i++) {
     res[i] = a[i];
   }
   int j;
   for (j = 0; j < length; j++, i++) {
-    res[j] = a[i];
+    res[i] = a[j];
   }
 
   return res;
