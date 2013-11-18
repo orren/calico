@@ -70,11 +70,10 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
           | Pure -> if String.compare param_name name = 0
                     then ""
                     else param_name ^ " = " ^ prop_expr
+          | PointReturn -> if String.compare param_name name = 0
+                           then ""
+                           else param_name ^ " = " ^ prop_expr
           | SideEffect  -> prop_expr
-          | PointReturn -> ty ^
-            " temp_" ^ param_name ^ " = " ^ prop_expr ^
-            ";\n        memcpy(" ^ param_name ^ ", temp_" ^
-            param_name ^ ", sizeof(" ^ ty ^ "))"
         end
       ^ ";\n// input_transformation >"
   end
