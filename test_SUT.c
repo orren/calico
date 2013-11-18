@@ -29,7 +29,7 @@ int sum(int *arr, int length) {
  * @output-prop { Pure } result ;
  */
 double *absolute(double a) {
-  double *answer = malloc(sizeof(int));
+  double *answer = malloc(sizeof(double));
   if (a < 0) {
     *answer = -1 * a;
   } else {
