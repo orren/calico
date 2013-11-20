@@ -18,11 +18,13 @@ int multiply_int(int a, int factor) {
   return a * factor;
 }
 
+/*
 int sum ( int arr [], int length ) {
   int i = 0, r = 0;
   for (; i < length;) r += arr[i++];
   return r;
 }
+*/
 
 int negate (int n) {
   return n * (-1);

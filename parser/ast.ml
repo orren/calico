@@ -12,7 +12,7 @@ type funKind = Pure
                | PointReturn
 type ty_str = TyStr of string
 type param_annot = string * funKind * string list (* name, kind, input list *)
-type out_annot = string * funKind * option string
+type out_annot = string * funKind * string option
 type annotation_pair = APair of param_annot list * out_annot
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
@@ -32,7 +32,7 @@ let name_of_param_annot (p: param_annot) : string =
 
 let name_of_out_annot (p: out_annot) : string =
   match p with
-    | (name, _) -> name
+    | (name, _, _) -> name
 
 let str_of_kind (k: funKind) : string =
   match k with
@@ -47,8 +47,11 @@ let str_of_pannot (annot: param_annot) : string =
 
 let str_of_pair (p: annotation_pair) : string =
   match p with
-    | APair (annot, (str, _)) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _, None)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
+    | APair (annot, (str, _, Some(s))) -> "\nIN ANNOTATIONS: " ^
+      (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
+      "\nSTATE recovery expr: " ^ s ^ "\n"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with

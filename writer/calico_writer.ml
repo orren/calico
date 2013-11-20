@@ -50,12 +50,12 @@ let call_inner_function (name: string) (kind: funKind) (ty: string) (params: par
 let deref_var (s : string) (v : string) : string =
   Str.global_replace (Str.regexp v) "orig_result" s
 
-let output_transformation (return_type : string) (prop : (string * funKind)): string =
+let output_transformation (return_type : string) (prop : (string * funKind * string option)): string =
   "// < output_transformation\n    " ^
     begin match prop with
-      | (prop_name, Pure)        -> "g_result = " ^ (deref_var prop_name "result")
-      | (prop_name, SideEffect)  -> prop_name
-      | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
+      | (prop_name, Pure, _)        -> "g_result = " ^ (deref_var prop_name "result")
+      | (prop_name, SideEffect, _)  -> prop_name
+      | (prop_name, PointReturn, _) -> return_type ^ " *temp_g_result = " ^
         (deref_var prop_name "result") ^
         ";\n        memcpy(&g_result, temp_g_result, result_size)"
     end
