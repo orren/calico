@@ -78,24 +78,18 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
       ^ ";\n// input_transformation >"
   end
 
-let transform_of_properties (ty: string)
-    (params: param_info list) (apair: annotation_pair) : (string * string) =
-  match apair with
-    | APair(param_annots, out_annot) ->
-            let in_transform = String.concat ";\n        "
-              (map2 input_transformation params param_annots) ^ ";\n" in
-            let out_transform = output_transformation ty out_annot in
-            (in_transform, out_transform)
-
 (* Requires param and property list *)
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   begin match f with
     | AComm(_, (name, kind, TyStr(ty)), params, apairs) ->
-      let (in_transform, out_transform) = transform_of_properties ty params (nth apairs procNum) in
+        let pAnnots = begin match (nth apairs procNum) with
+                        | APair (pas, _) -> pas
+                      end in
         "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
         "        t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
         (* apply input transformations *)
-        in_transform ^
+        String.concat ";\n        "
+          (map2 input_transformation params pAnnots) ^
         (* run inner function *)
         (call_inner_function name kind ty params) ^
         (* apply output transformations *)
