@@ -12,7 +12,7 @@ type funKind = Pure
                | PointReturn
 type ty_str = TyStr of string
 type param_annot = string * funKind * string list (* name, kind, input list *)
-type out_annot = string * funKind
+type out_annot = string * funKind * option string
 type annotation_pair = APair of param_annot list * out_annot
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
