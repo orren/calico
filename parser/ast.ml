@@ -11,7 +11,7 @@ type funKind = Pure
                | SideEffect
                | PointReturn
 type ty_str = TyStr of string
-type param_annot = string * funKind * string list (* name, kind, input list *)
+type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind * string option
 type annotation_pair = APair of param_annot list * out_annot
 type param_info = string * ty_str (* name, type *)

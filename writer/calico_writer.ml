@@ -143,7 +143,7 @@ let instrument_function (f : program_element) : string =
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length apairs) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
-        (map fst params)^ ")" in
+        (map fst params) ^ ")" in
       let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
@@ -159,6 +159,14 @@ let instrument_function (f : program_element) : string =
         "    int* shmids = malloc(numProps * sizeof(int));\n" ^
         "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
         "    int i;\n" ^
+
+
+
+        begin match k with
+          | Pure -> "    " ^ ty ^ " orig_result = 0;\n    "
+
+
+
         "    " ^ ty ^ " orig_result = " ^
         (if k = PointReturn then "malloc(result_size)" else "0") ^
         begin match k with
@@ -166,6 +174,10 @@ let instrument_function (f : program_element) : string =
           | SideEffect -> "" (* This case produces invalid code *)
           | PointReturn -> ";\n    " ^ ty ^ " t_result = NULL;\n    " ^
                                        ty ^ " g_result = NULL"
+
+
+
+
         end
         ^ ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
@@ -191,7 +203,7 @@ let instrument_function (f : program_element) : string =
         "        }\n" ^
         "    }\n\n" ^
 
-        (* children run transformed inputs and transform the result *)
+        (* children run transformed inputs and record the result in shared memory *)
         String.concat "\n" (map (transformed_call acomm) child_indexes) ^ "\n" ^
 
         (* make assertions about the results *)
