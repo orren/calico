@@ -13,7 +13,8 @@ type funKind = Pure
 type ty_str = TyStr of string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind * string option
-type annotation_pair = APair of param_annot list * out_annot
+type recovery = string * string
+type annotation_pair = APair of param_annot list * out_annot * (recovery option)
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
@@ -47,11 +48,11 @@ let str_of_pannot (annot: param_annot) : string =
 
 let str_of_pair (p: annotation_pair) : string =
   match p with
-    | APair (annot, (str, _, None)) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _, _), None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
-    | APair (annot, (str, _, Some(s))) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _, _), Some(s, ty)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
-      "\nSTATE recovery expr: " ^ s ^ "\n"
+      "\nSTATE recovery expr: " ^ s ^ ", of type: " ^ ty ^ "\n"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with
