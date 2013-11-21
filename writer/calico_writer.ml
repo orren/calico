@@ -132,6 +132,12 @@ let property_assertion (return_type : string) (fun_kind : funKind)
         "\n    }\n"
   end
 
+let set_result_sizes (ty_str : default) (aPair : annotation_pair) (procNum : int) :  string =
+  "result_sizes[" ^ procNum ^ "] = sizeof(" ^  
+  begin match aPair with
+    | APair(_, _, Some (TyStr(ty), _)) -> ty
+    | APair(_, _, None)                -> default
+
 let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> s
@@ -142,6 +148,7 @@ let instrument_function (f : program_element) : string =
       let call_to_inner = name ^ "(" ^ String.concat ", "
         (map fst params) ^ ")" in
       let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
+      let dereffed_type = (Str.global_replace (Str.regexp "*") "" ty) in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
         (* instrumented version *)
@@ -149,34 +156,24 @@ let instrument_function (f : program_element) : string =
            original annotations were included, or if left off entirely
         comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ param_decl ^ " {\n" ^
+        "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
+        "    size_t[numPromps] result_sizes;\n" ^
+        String.concat ";\n    " (map2 (set_result_size dereffed_type) apairs child_indexes) ^
 
         (* fork *)
-        "    size_t result_size = sizeof(" ^ (Str.global_replace (Str.regexp "*") "" ty) ^ ");\n" ^
-        "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
+
         "    int* shmids = malloc(numProps * sizeof(int));\n" ^
         "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
         "    int i;\n" ^
 
-
-
+        (* TODO: how to initialize for a pure struct return type? *)
         begin match k with
-          | Pure -> "    " ^ ty ^ " orig_result = 0;\n    "
-
-
-
-        "    " ^ ty ^ " orig_result = " ^
-        (if k = PointReturn then "malloc(result_size)" else "0") ^
-        begin match k with
-          | Pure -> ";\n    " ^ ty ^ "* t_result = 0;\n    " ^ ty ^ " g_result = 0"
-          | SideEffect -> "" (* This case produces invalid code *)
-          | PointReturn -> ";\n    " ^ ty ^ " t_result = NULL;\n    " ^
-                                       ty ^ " g_result = NULL"
-
-
-
+          | Pure        -> "    " ^ ty ^ " orig_result = 0;\n    " ^ 
+          | SideEffect  -> "" (* no need to return anything *)
+          | PointReturn -> "    " ^ ty ^ " orig_result = malloc(" ^ dereffed_type ^ ");\n" ^
 
         end
-        ^ ";\n\n" ^
+        ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
         "            shmids[i] = shmget(key++, result_size, IPC_CREAT | 0666);\n" ^
