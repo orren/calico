@@ -47,7 +47,7 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines funinfo SEMI params apairs   { AComm ($1, $2, $4, $5) }
+  | commlines funinfo SEMI params asets   { AComm ($1, $2, $4, $5) }
 
 funinfo:
   | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE { (snd $3,
@@ -70,12 +70,12 @@ commlines:
   | COMMLINE                        { snd $1 }
   | COMMLINE commlines              { (snd $1) ^ $2 }
 
-apairs:
-  | apair                           { [$1] }
-  | apair apairs                    { $1 :: $2 }
+asets:
+  | aset                           { [$1] }
+  | aset asets                    { $1 :: $2 }
 
-apair:
-  | inannot SEMI outannot           { APair ($1, $3) }
+aset:
+  | inannot SEMI outannot           { ASet ($1, fst $3, snd $3) }
 
 inannot:
   | INSTART paramannots                 { $2 }
@@ -97,9 +97,9 @@ arg:
   | STRLIT      { snd $1 }
 
 outannot:
-  | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { ($5, snd $3, None) }
+  | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { (($5, snd $3), None) }
   | OUTSTART LBRACE KIND RBRACE annotelem LSEP LBRACE STRLIT LSEP STRLIT RBRACE SEMI
-      { ($5, snd $3, Some ( snd $8, snd $10 )) }
+      { (($5, snd $3), Some ( snd $8, snd $10 )) }
 
 annotelem:
   /* call to a function */

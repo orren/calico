@@ -53,9 +53,9 @@ let deref_var (s : string) (v : string) : string =
 let output_transformation (return_type : string) (prop : out_annot): string =
   "// < output_transformation\n    " ^
     begin match prop with
-      | (prop_name, Pure, _)        -> "g_result = " ^ (deref_var prop_name "result")
-      | (prop_name, SideEffect, _)  -> prop_name
-      | (prop_name, PointReturn, _) -> return_type ^ " *temp_g_result = " ^
+      | (prop_name, Pure)        -> "g_result = " ^ (deref_var prop_name "result")
+      | (prop_name, SideEffect)  -> prop_name
+      | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
         (deref_var prop_name "result") ^
         ";\n        memcpy(&g_result, temp_g_result, result_size)"
     end
@@ -81,9 +81,9 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
 (* Requires param and property list *)
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   begin match f with
-    | AComm(_, (name, kind, TyStr(ty)), params, apairs) ->
-        let pAnnots = begin match (nth apairs procNum) with
-                        | APair (pas, _) -> pas
+    | AComm(_, (name, kind, TyStr(ty)), params, asets) ->
+        let pAnnots = begin match (nth asets procNum) with
+                        | ASet (pas, _, _) -> pas
                       end in
         "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
         "        t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
@@ -112,9 +112,9 @@ let fprint_results (fun_kind : funKind) (return_type : string) : string =
   end
 
 let property_assertion (return_type : string) (fun_kind : funKind)
-                       (prop : annotation_pair) (procNum : int) : string =
+    (prop : annotation_set) (procNum : int) : string =
   begin match prop with
-    | APair (param_props, out_prop) ->
+    | ASet (param_props, out_prop, _) ->
       "    t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    " ^
       output_transformation return_type out_prop ^
       "    if (" ^
@@ -142,9 +142,9 @@ let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> s
     | SrcStr(s) -> s
-    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, apairs) as acomm, funbody) ->
+    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, asets) as acomm, funbody) ->
       (* each child process will have a number *)
-      let child_indexes = (range_list 0 ((length apairs) - 1) []) in
+      let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
         (map fst params) ^ ")" in
       let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
@@ -156,9 +156,9 @@ let instrument_function (f : program_element) : string =
            original annotations were included, or if left off entirely
         comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ param_decl ^ " {\n" ^
-        "    int numProps = " ^ string_of_int (length apairs) ^ ";\n" ^
+        "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
         "    size_t[numPromps] result_sizes;\n" ^
-        String.concat ";\n    " (map2 (set_result_size dereffed_type) apairs child_indexes) ^
+        String.concat ";\n    " (map2 (set_result_size dereffed_type) asets child_indexes) ^
 
         (* fork *)
 
@@ -201,7 +201,7 @@ let instrument_function (f : program_element) : string =
         String.concat "\n" (map (transformed_call acomm) child_indexes) ^ "\n" ^
 
         (* make assertions about the results *)
-        String.concat "\n" (map2 (property_assertion ty k) apairs child_indexes) ^ "\n" ^
+        String.concat "\n" (map2 (property_assertion ty k) asets child_indexes) ^ "\n" ^
 
         (* cleanup *)
         "    free(shmids);\n" ^
