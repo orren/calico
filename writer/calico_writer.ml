@@ -50,7 +50,7 @@ let call_inner_function (name: string) (kind: funKind) (ty: string) (params: par
 let deref_var (s : string) (v : string) : string =
   Str.global_replace (Str.regexp v) "orig_result" s
 
-let output_transformation (return_type : string) (prop : (string * funKind * string option)): string =
+let output_transformation (return_type : string) (prop : out_annot): string =
   "// < output_transformation\n    " ^
     begin match prop with
       | (prop_name, Pure, _)        -> "g_result = " ^ (deref_var prop_name "result")
