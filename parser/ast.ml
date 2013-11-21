@@ -12,13 +12,13 @@ type funKind = Pure
                | PointReturn
 type ty_str = TyStr of string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
-type out_annot = string * funKind * string option
-type recovery = string * string
-type annotation_pair = APair of param_annot list * out_annot * (recovery option)
+type out_annot = string * funKind
+type recovery = ty_str * string
+type annotation_set = APair of param_annot list * out_annot * (recovery option)
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
-    string * fun_info * (param_info list) * (annotation_pair list)
+    string * fun_info * (param_info list) * (annotation_set list)
 type function_body = string
 type program_element = SrcStr of string
                        | ComStr of string
@@ -33,7 +33,7 @@ let name_of_param_annot (p: param_annot) : string =
 
 let name_of_out_annot (p: out_annot) : string =
   match p with
-    | (name, _, _) -> name
+    | (name, _) -> name
 
 let str_of_kind (k: funKind) : string =
   match k with
@@ -46,11 +46,11 @@ let str_of_pannot (annot: param_annot) : string =
     | (name, kind, lst) -> "CALL TO:  " ^ name ^ ", KIND:  " ^
       (str_of_kind kind) ^ "\n ARGS:  " ^ (String.concat ", " lst) ^ " "
 
-let str_of_pair (p: annotation_pair) : string =
+let str_of_pair (p: annotation_set) : string =
   match p with
-    | APair (annot, (str, _, _), None) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _), None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
-    | APair (annot, (str, _, _), Some(s, ty)) -> "\nIN ANNOTATIONS: " ^
+    | APair (annot, (str, _), Some(TyStr(ty),s)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
       "\nSTATE recovery expr: " ^ s ^ ", of type: " ^ ty ^ "\n"
 
