@@ -19,7 +19,7 @@ GEN_SOURCES =  \
 	parser/srclexer.ml  \
 	parser/prelex.ml
 
-all: all_sum all_SUT
+all: all_sum all_SUT all_mut
 
 all_sum: build_main rwr_sum run_sum
 
