@@ -9,7 +9,7 @@
  * @param-info { length, "int" } ;
  * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id(length) ;
  * @output-prop { Pure } multiply_int(result, 2) ;
- * @input-prop { SideEffect } permute(arr, length), { Pure } id(length) ;
+ * @input-prop { SideEffect } permute_int(arr, length), { Pure } id(length) ;
  * @output-prop { Pure } result ;
  */
 int sum(int *arr, int length) {
