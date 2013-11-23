@@ -2,8 +2,6 @@ open Printf
 open List
 open Ast
 
-let key_number : string = "9847"
-
 let rec repeat (s : string) (n : int) : string =
   if n <= 1 then s else s ^ (repeat s (n - 1))
 
