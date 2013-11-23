@@ -82,3 +82,9 @@ let str_of_pelem (e : program_element) : string =
 
 let str_of_prog (p : program_element list) : string =
   String.concat "\n" (List.map str_of_pelem p)
+
+let str_from_elem (p : program_element) : string =
+  match p with
+    | SrcStr(src) -> src
+    | ComStr(com) -> com
+    | AFun(_, _)  -> failwith "Unable to extract single string from function pair"

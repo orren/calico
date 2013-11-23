@@ -30,16 +30,14 @@ let alphachar = uppercase | lowercase
 let idchar = alphachar | '_' (* start of a legal identifier *)
 let ident = idchar (idchar | digit)*
 
-(* Basic regular expressions for the tokens of this grammar *)
 let fun_info = ['@'] whitespace* "fun-info"
 let param_info = ['@'] whitespace* "param-info"
 let in_prop  = ['@'] whitespace* "input-prop"
 let out_prop = ['@'] whitespace* "output-prop"
 
 (* Other characters we care about... *)
-let com_char = (['*'] [^ '/'] | ['?' '\\' '!' '"' '\'' '#' '<' '>' '.' '0'-'9' 'a'-'z' 'A'-'Z'])
-let com_line = linewhitespace* ('*' | (com_char | linewhitespace)*) nl
-
+let com_char = ['*' '%' '/' ':' '`' '-' '?' '\\' '!' '\'' '#' '<' '>' '.' 'a'-'z' 'A'-'Z' '0'-'9']
+let com_line = (com_char | linewhitespace)+ nl
 let kind_str = "PointReturn" | "Pure" | "SideEffect"
 
 (* Returns a token of type as specified in parser.mly
@@ -60,13 +58,16 @@ rule token = parse
   | ['-']? pdigit (digit)*                       { INT (lex_range lexbuf, lexeme lexbuf) }
   | com_line                                     { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | '"'                                          { STRLIT (lex_range lexbuf, str "" lexbuf) }
+  | nl                                           { NL (lex_range lexbuf) }
   | ','                                          { LSEP (lex_range lexbuf) }
   | '('                                          { LPAREN (lex_range lexbuf) }
   | ')'                                          { RPAREN (lex_range lexbuf) }
   | '{'                                          { LBRACE (lex_range lexbuf) }
   | '}'                                          { RBRACE (lex_range lexbuf) }
   | ';'                                          { SEMI (lex_range lexbuf) }
-  | _ as c                                       { unexpected_char lexbuf c "Error in comment lexer." }
+  | _ as c                                       { unexpected_char lexbuf c
+                                                     ("Error in comment lexer at: " ^ (lexeme lexbuf)) }
+
 and str s = parse
   | [^ '"']* as s                                { str s lexbuf }
   | '"'                                          { s }

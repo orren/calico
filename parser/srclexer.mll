@@ -15,11 +15,14 @@ rule funparse = parse
 and parenset depth = parse
   | "("    { parenset (depth + 1) lexbuf }
   | ")"    { if depth = 0
-             then let (bodylist, srcrest) = body 0 [] lexbuf in
+             then let (bodylist, srcrest) = (ff lexbuf) in
                   (String.concat "" (List.rev bodylist), srcrest)
              else parenset (depth - 1) lexbuf
            }
   | _      { parenset depth lexbuf }
+and ff = parse
+  | "{"    { body 1 [] lexbuf }
+  | _      { ff lexbuf }
 and body depth lst = parse
   | "{"                { body (depth + 1) ("{"::lst) lexbuf }
   | "}"                { if depth = 1

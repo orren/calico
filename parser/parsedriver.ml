@@ -16,28 +16,46 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
           Not_found -> failwith ("The function name " ^ name ^
                                     " was not found in the source following its annotation")
 
+(* Test whether a comment string looks like an annotation
+*)
+let is_annot (com: string) : bool =
+  try
+    let _ = (search_forward (regexp "@fun-info") com 0) in
+    true
+  with
+      Not_found -> Printf.printf "Not an annotation : %s\n" com; false
+
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
 let rec parse_of_program (pelems: program_element list) : program_element list =
-  let pair_rec com_str src_str rest =
+  let rec pair_rec com_str src_str rest =
     try
-      (* (Printf.printf "com_str: %s\n" com_str);*)
+      (* (Printf.printf "com_str: %s\n" com_str); *)
+      (* (Printf.printf "src_str: %s\n" src_str); *)
       let (acomm: annotated_comment) =
         Comparser.toplevel Comlexer.token (Lexing.from_string com_str) in
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
-      (* (Printf.printf "src_str: %s\n" src_str); *)
       let srcsplit = split_src acomm src_str in
       let (funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
       AFun (acomm, funbody) :: SrcStr(src_rest) :: (parse_of_program rest)
     with Parsing.Parse_error ->
       (Printf.printf "A parsing error occured parsing the comment: %s\n"
-         com_str);
-      parse_of_program rest
+         com_str); []
+      | Failure(s) ->
+        (Printf.printf "A failure error occured parsing the comment: %s: %s\n"
+           s com_str);
+        (* we may have run out of src in case a nested comment appeared within
+           a function body. *)
+        match rest with
+          | (ComStr(com)::e::lrest) -> pair_rec com_str (src_str ^ "/*" ^ com ^ "*/" ^ (str_from_elem e)) lrest
+          | _ -> failwith "Internal parser error"
+
   in
   begin match pelems with
     | []                                 -> []
-    | ( ComStr(com)::SrcStr(src)::rest ) -> pair_rec com src rest
+    | ( ComStr(com)::SrcStr(src)::rest ) ->
+      if is_annot com then pair_rec com src rest else ComStr(com)::SrcStr(src):: (parse_of_program rest)
     | ( h::rest )                        -> h :: (parse_of_program rest)
   end
 

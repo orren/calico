@@ -3,6 +3,9 @@
 extern void exit(int);
 
 /**
+ * Crazy: weird (comment, text)
+ */
+/**
  * May sum the elements of an array
  *
  * @fun-info { sum, Pure, "int" } ;

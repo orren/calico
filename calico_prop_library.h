@@ -87,8 +87,8 @@ void permute(void* base, size_t nmemb, size_t size) {
   for (i = 0; i < nmemb; i++) {
     int which = rand() % nmemb;
     memcpy(temp, (base + (which * size)), size);
-    memcpy((base + (i * size)), (base + (which * size)), size);
     memcpy((base + (which * size)), (base + (i * size)), size);
+    memcpy((base + (i * size)), temp, size);
   }
 }
 
