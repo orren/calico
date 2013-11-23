@@ -156,7 +156,7 @@ let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> "/*\n" ^ s ^ "*/\n"
     | SrcStr(s) -> s
-    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, asets) as acomm, funbody) ->
+    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, asets) as acomm, header, funbody) ->
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
