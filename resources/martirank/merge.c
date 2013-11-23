@@ -98,14 +98,6 @@ static void insertionsort(u_char *, size_t, size_t,
 /*
  * Arguments are as for qsort.
  */
-/**
- * Annotation comment
- *
- * @fun-info { mergesort, SideEffect, "int" } ;
- * @param-info { base, "void*" } ;
- * @param-info { nmemb, "size_t" } ;
- * @param-info { size, "size_t" } ;
- */
 int
 mergesort(base, nmemb, size, cmp)
     void *base;
