@@ -132,11 +132,13 @@ let property_assertion (return_type : string) (fun_kind : funKind)
         "\n    }\n"
   end
 
-let set_result_sizes (ty_str : default) (aPair : annotation_pair) (procNum : int) :  string =
-  "result_sizes[" ^ procNum ^ "] = sizeof(" ^  
-  begin match aPair with
-    | APair(_, _, Some (TyStr(ty), _)) -> ty
-    | APair(_, _, None)                -> default
+let set_result_sizes (default : string) (set : annotation_set) (procNum : int) :  string =
+  "result_sizes[" ^ string_of_int procNum ^ "] = sizeof(" ^  
+  begin match set with
+    | ASet(_, _, Some (_, TyStr(ty))) -> ty
+    | ASet(_, _, None)                -> default
+  end
+  ^ ")"
 
 let instrument_function (f : program_element) : string =
   begin match f with
@@ -157,8 +159,9 @@ let instrument_function (f : program_element) : string =
         comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ param_decl ^ " {\n" ^
         "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
-        "    size_t[numPromps] result_sizes;\n" ^
-        String.concat ";\n    " (map2 (set_result_size dereffed_type) asets child_indexes) ^
+        "    size_t result_sizes[numProps];\n" ^
+        String.concat ";\n    " (map2 (set_result_sizes dereffed_type) asets child_indexes) ^
+        ";\n" ^ 
 
         (* fork *)
 
@@ -168,15 +171,14 @@ let instrument_function (f : program_element) : string =
 
         (* TODO: how to initialize for a pure struct return type? *)
         begin match k with
-          | Pure        -> "    " ^ ty ^ " orig_result = 0;\n    " ^ 
+          | Pure        -> "    " ^ ty ^ " orig_result = 0;\n    "
           | SideEffect  -> "" (* no need to return anything *)
-          | PointReturn -> "    " ^ ty ^ " orig_result = malloc(" ^ dereffed_type ^ ");\n" ^
-
+          | PointReturn -> "    " ^ ty ^ " orig_result = malloc(" ^ dereffed_type ^ ");\n"
         end
-        ";\n\n" ^
+        ^ ";\n\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
-        "            shmids[i] = shmget(key++, result_size, IPC_CREAT | 0666);\n" ^
+        "            shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666);\n" ^
         "            if (0 == fork()) {\n" ^
         "                procNum = i;\n" ^
         "                break;\n" ^
