@@ -67,7 +67,7 @@ void multiply_double_array(double* a, double factor, double length) {
   for (i = 0; i < length; i++) a[i] *= factor;
 }
 
-void permute(int A[], int length) {
+void permute_int(int A[], int length) {
   srand(time(NULL));
   int i;
   for (i = 0; i < length; i++) {
@@ -75,6 +75,20 @@ void permute(int A[], int length) {
     int temp = A[i];
     A[i] = A[which];
     A[which] = temp;
+  }
+}
+
+void permute(void* base, size_t nmemb, size_t size) {
+  srand(time(NULL));
+  int i;
+
+  void * temp = malloc(size);
+
+  for (i = 0; i < nmemb; i++) {
+    int which = rand() % nmemb;
+    memcpy(temp, (base + (which * size)), size);
+    memcpy((base + (i * size)), (base + (which * size)), size);
+    memcpy((base + (which * size)), (base + (i * size)), size);
   }
 }
 
