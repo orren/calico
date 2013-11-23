@@ -154,7 +154,7 @@ let initialize_tg_results (default : string) (set : annotation_set) (procNum : i
 
 let instrument_function (f : program_element) : string =
   begin match f with
-    | ComStr(s) -> s
+    | ComStr(s) -> "/*\n" ^ s ^ "*/\n"
     | SrcStr(s) -> s
     | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, asets) as acomm, funbody) ->
       (* each child process will have a number *)
@@ -187,7 +187,7 @@ let instrument_function (f : program_element) : string =
           | SideEffect  -> "" (* no need to return anything *)
         end
         ^ "\n    " ^ String.concat "\n    "
-          (map2 (initialize_tg_results dereffed_type) asets child_indexes) ^
+        (map2 (initialize_tg_results dereffed_type) asets child_indexes) ^
 
         "\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
