@@ -21,7 +21,7 @@ and parenset depth = parse
            }
   | _      { parenset depth lexbuf }
 and ff = parse
-  | "{"    { body 1 [] lexbuf }
+  | "{"    { body 1 ["{"] lexbuf }
   | _      { ff lexbuf }
 and body depth lst = parse
   | "{"                { body (depth + 1) ("{"::lst) lexbuf }
