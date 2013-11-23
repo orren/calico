@@ -20,9 +20,10 @@ type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
     string * fun_info * (param_info list) * (annotation_set list)
 type function_body = string
+type function_header = string
 type program_element = SrcStr of string
                        | ComStr of string
-                       | AFun of annotated_comment * function_body
+                       | AFun of annotated_comment * function_header * function_body
 
 type sourceUnderTest = { file_name: string;
                          elements: program_element list }
