@@ -23,7 +23,7 @@ let is_annot (com: string) : bool =
     let _ = (search_forward (regexp "@fun-info") com 0) in
     true
   with
-      Not_found -> Printf.printf "Not an annotation : %s\n" com; false
+      Not_found -> (* Printf.printf "Not an annotation : %s\n" com; *) false
 
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
@@ -37,8 +37,8 @@ let rec parse_of_program (pelems: program_element list) : program_element list =
         Comparser.toplevel Comlexer.token (Lexing.from_string com_str) in
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
       let srcsplit = split_src acomm src_str in
-      let (funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
-      AFun (acomm, funbody) :: SrcStr(src_rest) :: (parse_of_program rest)
+      let (header, funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
+      AFun (acomm, header, funbody) :: SrcStr(src_rest) :: (parse_of_program rest)
     with Parsing.Parse_error ->
       (Printf.printf "A parsing error occured parsing the comment: %s\n"
          com_str); []
