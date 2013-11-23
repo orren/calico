@@ -2,8 +2,6 @@ open Printf
 open List
 open Ast
 
-let key_number : string = "9847"
-
 let rec repeat (s : string) (n : int) : string =
   if n <= 1 then s else s ^ (repeat s (n - 1))
 
@@ -35,29 +33,33 @@ let write_param (param : param_info) : string =
   match param with
     | (name, TyStr(ty)) -> ty ^ " " ^ name
 
-let call_inner_function (name: string) (kind: funKind) (ty: string) (params: param_info list) : string =
+let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: string)
+                        (params: param_info list) (recover : bool) : string =
+  let index = string_of_int procNum in
   let get_p_name = (fun p -> match p with (name, _) -> name) in
   let all_names = (map get_p_name params) in
   "// < call_inner_function\n        " ^
     begin match kind with
-      | Pure        -> "*t_result = __" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
+      | Pure        -> (if not recover then "*t_result" ^ index ^ " = __" else "") ^ name ^
+                       "(" ^ String.concat ", " all_names ^ ")"
       | SideEffect  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
       | PointReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
-        String.concat ", " all_names ^ ");\n        memcpy(t_result, temp_t_result, result_size)"
+        String.concat ", " all_names ^
+        ");\n        memcpy(t_result" ^ index ^ ", temp_t_result, result_sizes[" ^ index ^ "])"
     end
   ^ ";\n// call_inner_function >\n"
 
-let deref_var (s : string) (v : string) : string =
-  Str.global_replace (Str.regexp v) "orig_result" s
-
-let output_transformation (return_type : string) (prop : out_annot): string =
+let output_transformation (procNum : int) (return_type : string)
+                          (prop : out_annot) : string =
+  let index = string_of_int procNum in
   "// < output_transformation\n    " ^
     begin match prop with
-      | (prop_name, Pure)        -> "g_result = " ^ (deref_var prop_name "result")
+      | (prop_name, Pure)        -> "*g_result" ^ index ^ " = " ^
+          Str.global_replace (Str.regexp "result") "*orig_result" prop_name
       | (prop_name, SideEffect)  -> prop_name
       | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
-        (deref_var prop_name "result") ^
-        ";\n        memcpy(&g_result, temp_g_result, result_size)"
+          Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
+        ";\n        memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
     end
   ^ ";\n// output_transformation >\n"
 
@@ -67,10 +69,9 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
       let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
       "// < input_transformation\n        " ^
         begin match kind with
-          | Pure -> if String.compare param_name name = 0
-                    then ""
-                    else param_name ^ " = " ^ prop_expr
-          | PointReturn -> if String.compare param_name name = 0
+          | Pure
+          | PointReturn -> if String.compare param_name name = 0 ||
+                              String.compare name "id" = 0
                            then ""
                            else param_name ^ " = " ^ prop_expr
           | SideEffect  -> prop_expr
@@ -78,27 +79,39 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
       ^ ";\n// input_transformation >"
   end
 
+let recover_t_result (procNum : int) (aset : annotation_set) : string =
+  begin match aset with
+    | ASet(_, _, Some(expr, _)) -> "*t_result" ^ string_of_int procNum ^ " = " ^ expr ^ ";\n"
+    | ASet(_, _, None)          -> ""
+  end
+
 (* Requires param and property list *)
 let transformed_call (f : annotated_comment) (procNum : int) : string =
+  let index = string_of_int procNum in
   begin match f with
     | AComm(_, (name, kind, TyStr(ty)), params, asets) ->
-        let pAnnots = begin match (nth asets procNum) with
-                        | ASet (pas, _, _) -> pas
-                      end in
-        "    if (procNum == " ^ (string_of_int procNum) ^ ") {\n" ^
-        "        t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n" ^
+        let aset = nth asets procNum in
+        let (pAnnots, recover) = begin match aset with
+          | ASet (pas, _, Some (_)) -> (pas, true)
+          | ASet (pas, _, None)     -> (pas, false)
+        end in
+        "    if (procNum == " ^ index ^ ") {\n" ^
+        "        t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n" ^
         (* apply input transformations *)
         String.concat ";\n        "
           (map2 input_transformation params pAnnots) ^
         (* run inner function *)
-        (call_inner_function name kind ty params) ^
-        (* apply output transformations *)
-        "        shmdt(t_result);\n" ^
+        (call_inner_function procNum name kind ty params recover) ^
+        (* recover result if necessary *)
+        recover_t_result procNum aset ^
+        (* clean up *)
+        "        shmdt(t_result" ^ index ^ ");\n" ^
         "        exit(0);\n" ^
         "    }\n"
   end
 
-let fprint_results (fun_kind : funKind) (return_type : string) : string =
+let fprint_results (procNum : int) (fun_kind : funKind) (return_type : string) : string =
+  let index = string_of_int procNum in
   let indicator = begin match return_type with
                   | "int"    -> "%d"
                   | "double" -> "%f"
@@ -108,29 +121,36 @@ let fprint_results (fun_kind : funKind) (return_type : string) : string =
   begin match indicator with
   | "" -> ""
   | _  -> "        printf(\"g(f(x)): " ^ indicator ^ "\\nf(t(x)): " ^ indicator ^
-          "\\n\", g_result, *t_result);"
+          "\\n\", *g_result" ^ index ^ ", *t_result" ^ index ^ ");"
   end
 
 let property_assertion (return_type : string) (fun_kind : funKind)
     (prop : annotation_set) (procNum : int) : string =
+  let index = string_of_int procNum in
   begin match prop with
-    | ASet (param_props, out_prop, _) ->
-      "    t_result = shmat(shmids[" ^ (string_of_int procNum) ^ "], NULL, 0);\n    " ^
-      output_transformation return_type out_prop ^
-      "    if (" ^
-    (* TODO: for compound data types, we need the tester to supply a notion of equality *)
-        begin match fun_kind with
-          | PointReturn -> "*"
-          | Pure        -> ""
-          | SideEffect  -> ""
-        end
-      ^ "g_result != *t_result) {\n" ^
-        "        printf(\"a property has been violated:\\ninput_prop: " ^
-        (String.concat ", " (map name_of_param_annot param_props)) ^
-        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
-        fprint_results fun_kind return_type ^
-        "\n    }\n"
+    | ASet(param_props, out_prop, recover) ->
+      "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
+      begin match recover with
+        | None          -> output_transformation procNum return_type out_prop
+        | Some(expr, _) -> "*g_result" ^ index ^ " = " ^ expr ^ ";\n    "
+      end
+      ^ "    if (*g_result" ^ index ^ " != *t_result" ^ index ^ ") {\n" ^
+      "        printf(\"a property has been violated:\\ninput_prop: " ^
+      (String.concat ", " (map name_of_param_annot param_props)) ^
+      "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
+      fprint_results procNum fun_kind return_type ^
+      "\n    }\n"
   end
+
+let initialize_tg_results (default : string) (set : annotation_set) (procNum : int) : string =
+  let theType = begin match set with
+    | ASet(_, _, Some (_, TyStr(ty))) -> ty
+    | ASet(_, _, None)                -> default
+  end in
+  let index = string_of_int procNum in
+  "result_sizes[" ^ index ^ "] = sizeof(" ^ theType ^ ");\n    " ^
+  theType ^ " *t_result" ^ index ^ " = NULL;\n    " ^
+  theType ^ " *g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
 
 let instrument_function (f : program_element) : string =
   begin match f with
@@ -142,6 +162,7 @@ let instrument_function (f : program_element) : string =
       let call_to_inner = name ^ "(" ^ String.concat ", "
         (map fst params) ^ ")" in
       let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
+      let dereffed_type = (Str.global_replace (Str.regexp "*") "" ty) in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
         (* instrumented version *)
@@ -149,36 +170,29 @@ let instrument_function (f : program_element) : string =
            original annotations were included, or if left off entirely
         comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ param_decl ^ " {\n" ^
+        "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
+        "    size_t result_sizes[numProps];\n" ^
 
         (* fork *)
-        "    size_t result_size = sizeof(" ^ (Str.global_replace (Str.regexp "*") "" ty) ^ ");\n" ^
-        "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
+
         "    int* shmids = malloc(numProps * sizeof(int));\n" ^
         "    int procNum = -1;\n" ^ (* -1 for parent, 0 and up for children *)
         "    int i;\n" ^
 
-
+        (* TODO: how to initialize for a pure struct return type? *)
         begin match k with
-          | Pure -> "    " ^ ty ^ " orig_result = 0;\n    "
-
-
-
-        "    " ^ ty ^ " orig_result = " ^
-            (if k = PointReturn then "malloc(result_size)" else "0") ^
-        begin match k with
-          | Pure -> ";\n    " ^ ty ^ "* t_result = 0;\n    " ^ ty ^ " g_result = 0"
-          | SideEffect -> "" (* This case produces invalid code *)
-          | PointReturn -> ";\n    " ^ ty ^ " t_result = NULL;\n    " ^
-                                       ty ^ " g_result = NULL"
-
-
-
-
+          | Pure
+          | PointReturn -> "    " ^ dereffed_type ^ " *orig_result = malloc(sizeof(" ^
+                           dereffed_type ^ "));\n"
+          | SideEffect  -> "" (* no need to return anything *)
         end
-        ^ ";\n\n" ^
+        ^ "\n    " ^ String.concat "\n    "
+          (map2 (initialize_tg_results dereffed_type) asets child_indexes) ^
+
+        "\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
-        "            shmids[i] = shmget(key++, result_size, IPC_CREAT | 0666);\n" ^
+        "            shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666);\n" ^
         "            if (0 == fork()) {\n" ^
         "                procNum = i;\n" ^
         "                break;\n" ^
@@ -189,9 +203,9 @@ let instrument_function (f : program_element) : string =
         (* parent runs original inputs and waits for children *)
         "    if (procNum == -1) {\n        " ^
         begin match k with
-          | Pure        -> "orig_result = __" ^ call_to_inner
+          | Pure        -> "*orig_result = __" ^ call_to_inner
           | PointReturn -> ty ^ " temp_orig_result = __" ^ call_to_inner ^
-            ";\n        memcpy(orig_result, temp_orig_result, result_size)"
+            ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ ty ^ "))"
           | SideEffect  -> call_to_inner
         end
         ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
@@ -207,8 +221,9 @@ let instrument_function (f : program_element) : string =
 
         (* cleanup *)
         "    free(shmids);\n" ^
-        "    return orig_result;\n" ^
-        "}"
+        "    return " ^ (if String.compare ty "void" = 0 then "" else
+                        (if k == Pure then "*" else "") ^ "orig_result") ^
+        ";\n" ^ "}"
   end
 
 let write_source (sut: sourceUnderTest) : unit =
