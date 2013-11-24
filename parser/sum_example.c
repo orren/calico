@@ -17,7 +17,7 @@ extern void exit(int);
  * @output-prop { Pure } double_int(result, 1, 2, 3) ;
  */
 int sum ( int arr [], int length ) {
-  int i = 0, r = 0;
+  int i = 0, r = 0; /* mulit-line comment in source */
   for (; i < length;) r += arr[i++];
   return r;
 }
