@@ -18,7 +18,7 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
 
 (* Test whether a comment string looks like an annotation
 *)
-let is_annot (com: string) : bool = string_match (regexp "@fun-info") com 0
+let is_annot (com: string) : bool = string_match (regexp "\(\n\|.\)*@fun-info\(\n\|.\)*") com 0
 
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
