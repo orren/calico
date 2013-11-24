@@ -226,9 +226,17 @@ let instrument_function (f : program_element) : string =
         ";\n" ^ "}"
   end
 
+let rec name_out_path (modif : string) (path : string list) : string = 
+  begin match path with
+    | []      -> raise (Failure "")
+    | [x]     -> modif ^ x
+    | x :: xs -> x ^ "/" ^ (name_out_path modif xs)
+  end
+
 let write_source (sut: sourceUnderTest) : unit =
   (* TODO: actually implement indentation tracking instead of just guessing *)
-  let out = open_out ("calico_gen_" ^ sut.file_name) in
+  let path = Str.split (Str.regexp "/") sut.file_name in
+  let out = open_out (name_out_path "calico_gen_" path) in
   fprintf out "#include \"calico_prop_library.h\"\n%s\n"
-    (String.concat "\n\n" (map instrument_function sut.elements));
+    (String.concat "\n" (map instrument_function sut.elements));
   close_out out;
