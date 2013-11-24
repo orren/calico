@@ -14,6 +14,8 @@
     then KIND (lex_rng, Pure)
     else if (compare lex_res "SideEffect") = 0
     then KIND (lex_rng, SideEffect)
+    else if (compare lex_res "id") = 0
+    then KWRD (lex_rng, "id")
     else IDENT (lex_rng, lex_res)
 }
 

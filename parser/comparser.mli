@@ -18,6 +18,7 @@ type token =
   | IDENT of (Range.t * string)
   | STRLIT of (Range.t * string)
   | INT of (Range.t * string)
+  | KWRD of (Range.t * string)
   | KIND of (Range.t * Ast.funKind)
 
 val toplevel :

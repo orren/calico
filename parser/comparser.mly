@@ -28,6 +28,7 @@ open Ast;;
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
 %token <Range.t * string> INT      /* integer */
+%token <Range.t * string> KWRD      /* reserved keyword */
 %token <Range.t * Ast.funKind> KIND    /* function kind */
 
 /* ---------------------------------------------------------------------- */
@@ -86,6 +87,7 @@ paramannots:
 
 paramannot:
   | LBRACE KIND RBRACE IDENT LPAREN arglist RPAREN { (snd $4, snd $2, $6) }
+  | LBRACE KIND RBRACE KWRD                        { (snd $4, snd $2, []) }
 
 arglist:
   | arg                            { [$1] }
