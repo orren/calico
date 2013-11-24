@@ -18,18 +18,23 @@ let split_src (ac: annotated_comment) (src_str: string) : string =
 
 (* Test whether a comment string looks like an annotation
 *)
-let is_annot (com: string) : bool =
-  try
-    let _ = (search_forward (regexp "@fun-info") com 0) in
-    true
-  with
-      Not_found -> (* Printf.printf "Not an annotation : %s\n" com; *) false
+let is_annot (com: string) : bool = string_match (regexp "@fun-info") com 0
 
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
-let rec parse_of_program (pelems: program_element list) : program_element list =
-  let rec pair_rec com_str src_str rest =
+let parse_of_program (pelems: program_element list) : program_element list =
+  let rec lst_rec (pelems: program_element list) (acc: program_element list) : program_element list =
+    begin match pelems with
+      | []                               -> List.rev acc
+      | (ComStr(com)::SrcStr(src)::rest) ->
+        if is_annot com
+        then pair_rec com src rest acc
+        else lst_rec rest (SrcStr(src)::ComStr(com)::acc)
+      | (h::rest)                        -> lst_rec rest (h::acc)
+    end
+  and
+   pair_rec com_str src_str rest acc =
     try
       (* (Printf.printf "com_str: %s\n" com_str); *)
       (* (Printf.printf "src_str: %s\n" src_str); *)
@@ -38,26 +43,21 @@ let rec parse_of_program (pelems: program_element list) : program_element list =
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
       let srcsplit = split_src acomm src_str in
       let (header, funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
-      AFun (acomm, header, funbody) :: SrcStr(src_rest) :: (parse_of_program rest)
+      lst_rec rest (SrcStr(src_rest) :: AFun (acomm, header, funbody) :: acc)
     with Parsing.Parse_error ->
       (Printf.printf "A parsing error occured parsing the comment: %s\n"
          com_str); []
       | Failure(s) ->
-        (Printf.printf "A failure error occured parsing the comment: %s: %s\n"
+        (Printf.printf "A failure error occured parsing the comment: %s: %s\n" 
            s com_str);
         (* we may have run out of src in case a nested comment appeared within
            a function body. *)
         match rest with
-          | (ComStr(com)::e::lrest) -> pair_rec com_str (src_str ^ "/*" ^ com ^ "*/" ^ (str_from_elem e)) lrest
-          | _ -> failwith "Internal parser error"
-
+          | (ComStr(com)::e::lrest) ->
+            pair_rec com_str (src_str ^ "/*" ^ com ^ "*/" ^ (str_from_elem e)) lrest acc
+          | _ -> failwith "Internal parser error: contiguous source strings."
   in
-  begin match pelems with
-    | []                                 -> []
-    | ( ComStr(com)::SrcStr(src)::rest ) ->
-      if is_annot com then pair_rec com src rest else ComStr(com)::SrcStr(src):: (parse_of_program rest)
-    | ( h::rest )                        -> h :: (parse_of_program rest)
-  end
+  lst_rec pelems []
 
 (* Primary entry point for the parser *)
 let parse (fname: string) (buf: Lexing.lexbuf) : program_element list =
