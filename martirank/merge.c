@@ -105,6 +105,7 @@ static void insertionsort(u_char *, size_t, size_t,
  * @param-info { base, "void*" } ;
  * @param-info { nmemb, "size_t" } ;
  * @param-info { size, "size_t" } ;
+ * @param-info { cmp, "" } ;
  * @input-prop { SideEffect } permute(base, nmemb, size), { Pure } id(nmemb), { Pure } id(size), { Pure } id(cmp) ;
  * @output-prop { Pure } id(result);
  */

@@ -53,8 +53,8 @@ let parse_of_program (pelems: program_element list) : program_element list =
       (Printf.printf "A parsing error occured parsing the comment: %s\n"
          com_str); []
       | Failure(s) ->
-        (Printf.printf "A failure error occured parsing the comment: %s: %s\n" 
-           s com_str);
+        (*  Printf.printf "A failure error occured parsing the comment: %s: %s\n"
+            s com_str); *)
         (* we may have run out of src in case a nested comment appeared within
            a function body. *)
         match rest with
