@@ -6,3 +6,5 @@
 calicoMain
 calico_gen*
 test_SUT_original
+sum_example_original
+sftp-config.json
