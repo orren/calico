@@ -44,8 +44,9 @@ comp_mut: mut_example.c
 	gcc -Wall -o mut_example_original mut_example.c
 	./mut_example_original
 
-comp_merge: merge.c
-	gcc -Wall -o merge_original merge.c
+comp_merge: martirank/merge.c
+	gcc -Wall -o merge_original martirank/*.c
+	./merge_original martirank/data.txt ./output.txt --no-permute --no-prob-dist
 
 rwr_SUT: build_main test_SUT.c
 	./calicoMain test_SUT.c
@@ -56,8 +57,8 @@ rwr_sum: build_main sum_example.c
 rwr_mut: build_main mut_example.c
 	./calicoMain mut_example.c
 
-rwr_merge: build_main merge.c
-	./calicoMain merge.c
+rwr_merge: build_main martirank/merge.c
+	./calicoMain martirank/merge.c
 
 run_SUT:
 	gcc -Wall -o calico_gen_test_SUT calico_gen_test_SUT.c
