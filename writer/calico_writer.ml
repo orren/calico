@@ -161,15 +161,14 @@ let instrument_function (f : program_element) : string =
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
         (map fst params) ^ ")" in
-      let param_decl = "(" ^ String.concat ", " (map write_param params) ^ ")" in
       let dereffed_type = (Str.global_replace (Str.regexp "*") "" ty) in
       (* original version of the function with underscores *)
-      ty ^ " __" ^ name ^ param_decl ^ funbody ^ "\n\n" ^
+      ty ^ " __" ^ name ^ header ^ funbody ^ "\n\n" ^
         (* instrumented version *)
         (* TODO: comm_text produces bad comments... would be most useful if
            original annotations were included, or if left off entirely
         comm_text ^ "\n" ^ *)
-        ty ^ " " ^ name ^ param_decl ^ " {\n" ^
+        ty ^ " " ^ name ^ header ^ " {\n" ^
         "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
         "    size_t result_sizes[numProps];\n" ^
 
