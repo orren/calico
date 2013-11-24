@@ -73,7 +73,7 @@ run_mut:
 	./calico_gen_mut_example
 
 run_merge:
-	gcc -Wall -o calico_gen_merge calico_gen_merge.c
+	gcc -Wall -I . -o calico_gen_merge martirank/calico_gen_merge.c
 	./calico_gen_merge
 
 clean: test_SUT.c sum_example.c
