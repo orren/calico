@@ -110,6 +110,7 @@ annotelem:
   | STRLIT                 { snd $1 }
   /* single identifier */
   | IDENT                  { snd $1 }
+  | KWRD                   { snd $1 }
 
 /* recognize a function call, emit the whole thing as a string */
 funcall:
