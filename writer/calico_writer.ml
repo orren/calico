@@ -82,7 +82,8 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
 
 let recover_t_result (procNum : int) (aset : annotation_set) : string =
   begin match aset with
-    | ASet(_, _, Some(expr, _)) -> "*t_result" ^ string_of_int procNum ^ " = " ^ expr ^ ";\n"
+    | ASet(_, _, Some(expr, _)) -> "        *t_result" ^ string_of_int procNum ^
+                                   " = " ^ expr ^ ";\n"
     | ASet(_, _, None)          -> ""
   end
 
