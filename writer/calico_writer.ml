@@ -51,15 +51,16 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
 
 let output_transformation (procNum : int) (return_type : string)
                           (prop : out_annot) : string =
-  let index = string_of_int procNum in
+  let index = string_of_int procNum in  
   "// < output_transformation\n    " ^
-    begin match prop with
-      | (prop_name, Pure)        -> "*g_result" ^ index ^ " = " ^
-          Str.global_replace (Str.regexp "result") "*orig_result" prop_name
-      | (prop_name, SideEffect)  -> prop_name
-      | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
-          Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
-        ";\n        memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
+  begin match prop with
+    | ("id", _)                -> ""
+    | (prop_name, Pure)        -> "*g_result" ^ index ^ " = " ^
+        Str.global_replace (Str.regexp "result") "*orig_result" prop_name
+    | (prop_name, SideEffect)  -> prop_name
+    | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
+        Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
+      ";\n        memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
     end
   ^ ";\n// output_transformation >\n"
 
@@ -179,13 +180,9 @@ let instrument_function (f : program_element) : string =
         "    int i;\n" ^
 
         (* TODO: how to initialize for a pure struct return type? *)
-        begin match k with
-          | Pure
-          | PointReturn -> "    " ^ dereffed_type ^ " *orig_result = malloc(sizeof(" ^
-                           dereffed_type ^ "));\n"
-          | SideEffect  -> "" (* no need to return anything *)
-        end
-        ^ "\n    " ^ String.concat "\n    "
+        (if ty = "void" then "" else "    " ^ dereffed_type ^
+          " *orig_result = malloc(sizeof(") ^ dereffed_type ^ "));" ^
+        "\n    " ^ String.concat "\n    "
         (map2 (initialize_tg_results dereffed_type) asets child_indexes) ^
 
         "\n" ^
@@ -203,9 +200,11 @@ let instrument_function (f : program_element) : string =
         "    if (procNum == -1) {\n        " ^
         begin match k with
           | Pure        -> "*orig_result = __" ^ call_to_inner
-          | PointReturn -> ty ^ " temp_orig_result = __" ^ call_to_inner ^
-            ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^ ty ^ "))"
-          | SideEffect  -> call_to_inner
+          | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ dereffed_type ^ "));\n    " ^
+                           " temp_orig_result = __" ^ call_to_inner ^
+                           ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
+                           dereffed_type ^ "))"
+          | SideEffect  -> (if ty = "void" then "" else "orig_result = __" ^ call_to_inner)
         end
         ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
         "            wait(NULL);\n" ^
