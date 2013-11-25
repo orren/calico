@@ -143,6 +143,9 @@ let property_assertion (return_type : string) (fun_kind : funKind)
       "\n    }\n"
   end
 
+let unstar (type_str : string) : string =
+  Str.global_replace (Str.regexp "*") "" type_str
+
 let initialize_tg_results (default : string) (set : annotation_set) (procNum : int) : string =
   let theType = begin match set with
     | ASet(_, _, Some (_, TyStr(ty))) -> ty
@@ -150,8 +153,8 @@ let initialize_tg_results (default : string) (set : annotation_set) (procNum : i
   end in
   let index = string_of_int procNum in
   "result_sizes[" ^ index ^ "] = sizeof(" ^ theType ^ ");\n    " ^
-  theType ^ " *t_result" ^ index ^ " = NULL;\n    " ^
-  theType ^ " *g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
+  (unstar theType) ^ " *t_result" ^ index ^ " = NULL;\n    " ^
+  (unstar theType) ^ " *g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
 
 let instrument_function (f : program_element) : string =
   begin match f with
@@ -162,7 +165,6 @@ let instrument_function (f : program_element) : string =
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "
         (map fst params) ^ ")" in
-      let dereffed_type = (Str.global_replace (Str.regexp "*") "" ty) in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ header ^ funbody ^ "\n\n" ^
         (* instrumented version *)
@@ -180,10 +182,10 @@ let instrument_function (f : program_element) : string =
         "    int i;\n" ^
 
         (* TODO: how to initialize for a pure struct return type? *)
-        (if ty = "void" then "" else "    " ^ dereffed_type ^
-          " *orig_result = malloc(sizeof(") ^ dereffed_type ^ "));" ^
+        (if ty = "void" then "" else "    " ^ (unstar ty) ^
+          " *orig_result = malloc(sizeof(") ^ (unstar ty) ^ "));" ^
         "\n    " ^ String.concat "\n    "
-        (map2 (initialize_tg_results dereffed_type) asets child_indexes) ^
+        (map2 (initialize_tg_results (unstar ty)) asets child_indexes) ^
 
         "\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
@@ -200,10 +202,10 @@ let instrument_function (f : program_element) : string =
         "    if (procNum == -1) {\n        " ^
         begin match k with
           | Pure        -> "*orig_result = __" ^ call_to_inner
-          | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ dereffed_type ^ "));\n    " ^
+          | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));\n    " ^
                            " temp_orig_result = __" ^ call_to_inner ^
                            ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
-                           dereffed_type ^ "))"
+                           (unstar ty) ^ "))"
           | SideEffect  -> (if ty = "void" then "" else "orig_result = __" ^ call_to_inner)
         end
         ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
