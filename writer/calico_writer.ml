@@ -183,7 +183,7 @@ let instrument_function (f : program_element) : string =
 
         (* TODO: how to initialize for a pure struct return type? *)
         (if ty = "void" then "" else "    " ^ (unstar ty) ^
-          " *orig_result = malloc(sizeof(") ^ (unstar ty) ^ "));" ^
+          " *orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));") ^
         "\n    " ^ String.concat "\n    "
         (map2 (initialize_tg_results (unstar ty)) asets child_indexes) ^
 
