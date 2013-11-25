@@ -7,7 +7,7 @@ open Str
 *)
 let split_src (ac: annotated_comment) (src_str: string) : string =
   match ac with
-    | AComm(_, (name, _, _), _, _) ->
+    | AComm((name, _, _), _, _) ->
       try
         let src_len = String.length src_str in
         let name_ind = (search_forward (regexp name) src_str 0) + (String.length name) in
@@ -48,7 +48,7 @@ let parse_of_program (pelems: program_element list) : program_element list =
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
       let srcsplit = split_src acomm src_str in
       let (header, funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
-      lst_rec rest (SrcStr(src_rest) :: AFun (acomm, header, funbody) :: acc)
+      lst_rec rest (SrcStr(src_rest) :: AFun (acomm, header, funbody) :: ComStr(com_str) :: acc)
     with Parsing.Parse_error ->
       (Printf.printf "A parsing error occured parsing the comment: %s\n"
          com_str); []

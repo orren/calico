@@ -81,7 +81,7 @@ let recover_t_result (procNum : int) (aset : annotation_set) : string =
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   let index = string_of_int procNum in
   begin match f with
-    | AComm(_, (name, kind, ty), params, asets) ->
+    | AComm((name, kind, ty), params, asets) ->
         let aset = nth asets procNum in
         let (pAnnots, recover) = begin match aset with
           | ASet (pas, _, Some (_)) -> (pas, true)
@@ -167,16 +167,13 @@ let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> "/*\n" ^ s ^ "*/\n"
     | SrcStr(s) -> s
-    | AFun (AComm(comm_text, (name, k, ty), params, asets) as acomm, header, funbody) ->
+    | AFun (AComm((name, k, ty), params, asets) as acomm, header, funbody) ->
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", " (map fst params) ^ ")" in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ header ^ funbody ^ "\n\n" ^
         (* instrumented version *)
-        (* TODO: comm_text produces bad comments... would be most useful if
-           original annotations were included, or if left off entirely
-           comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ header ^ " {\n" ^
         "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
         "    size_t result_sizes[numProps];\n" ^

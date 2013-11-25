@@ -18,7 +18,7 @@ type annotation_set = ASet of param_annot list * out_annot * (state_recovery opt
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
-    string * fun_info * (param_info list) * (annotation_set list)
+    fun_info * (param_info list) * (annotation_set list)
 type function_body = string
 type function_header = string
 type program_element = SrcStr of string
@@ -69,9 +69,9 @@ let str_of_param (p : param_info) : string =
 
 let str_of_annot (ac : annotated_comment) : string =
   match ac with
-    | AComm (str, funinfo, params, apairs) ->
-      ("COMMENT TEXT: \n" ^ str ^ "\nANNOTS: " ^ (String.concat "\n"
-                                                    (List.map str_of_pair apairs))) ^ "\n" ^
+    | AComm (funinfo, params, apairs) ->
+      ("ANNOTS: " ^ (String.concat "\n"
+                       (List.map str_of_pair apairs))) ^ "\n" ^
         (str_of_funinfo funinfo) ^ "\nPARAMS: " ^ (String.concat "\n"
                                                      (List.map str_of_param params)) ^ "\n"
 

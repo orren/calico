@@ -48,7 +48,7 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines funinfo SEMI params asets   { AComm ($1, $2, $4, $5) }
+  | commlines funinfo SEMI params asets   { AComm ($2, $4, $5) }
 
 funinfo:
   | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE { (snd $3,
