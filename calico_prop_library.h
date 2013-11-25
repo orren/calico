@@ -26,8 +26,9 @@ int sum ( int arr [], int length ) {
 }
 */
 
-int negate (int n) {
-  return n * (-1);
+int* negate (int* n) {
+  *n = (*n) * (-1);
+  return n;
 }
 
 int id(int n) {
