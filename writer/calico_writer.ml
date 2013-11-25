@@ -208,7 +208,7 @@ let instrument_function (f : program_element) : string =
                            " temp_orig_result = __" ^ call_to_inner ^
                            ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
                            (unstar ty) ^ "))"
-          | SideEffect  -> (if ty = "void" then "" else "orig_result = __" ^ call_to_inner)
+          | SideEffect  -> (if ty = "void" then "" else "orig_result = ") ^ "__" ^ call_to_inner
         end
         ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
         "            wait(NULL);\n" ^
