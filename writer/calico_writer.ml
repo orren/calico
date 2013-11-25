@@ -133,8 +133,9 @@ let property_assertion (return_type : string) (fun_kind : funKind)
     | ASet(param_props, out_prop, recover) ->
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
       begin match recover with
-        | None          -> output_transformation procNum return_type out_prop
-        | Some(expr, _) -> "*g_result" ^ index ^ " = " ^ expr ^ ";\n    "
+        | None               -> output_transformation procNum return_type out_prop
+        | Some(expr, TyStr(rec_ty)) -> "*g_result" ^ index ^ " = " ^ expr ^ ";\n    " ^
+                                output_transformation procNum rec_ty out_prop
       end
       ^ "    if (*g_result" ^ index ^ " != *t_result" ^ index ^ ") {\n" ^
       "        printf(\"a property has been violated:\\ninput_prop: " ^
