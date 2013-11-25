@@ -45,7 +45,7 @@ comp_mut: mut_example.c
 	./mut_example_original
 
 comp_merge: martirank/merge.c
-	gcc -Wall -o merge_original martirank/*.c
+	gcc -Wall -o merge_original martirank/ml3.c martirank/merge.c martirank/m-core.c
 	./merge_original martirank/data.txt ./output.txt --no-permute --no-prob-dist
 
 rwr_SUT: build_main test_SUT.c
@@ -73,8 +73,8 @@ run_mut:
 	./calico_gen_mut_example
 
 run_merge:
-	gcc -Wall -I . -o calico_gen_merge martirank/calico_gen_merge.c
-	./calico_gen_merge
+	gcc -Wall -I . -o calico_gen_merge martirank/calico_gen_merge.c martirank/ml3.c martirank/m-core.c
+	./calico_gen_merge martirank/data.txt ./output.txt --no-permute --no-prob-dist
 
 clean: test_SUT.c sum_example.c
 	rm parser/*.cm* $(GEN_SOURCES)
