@@ -53,7 +53,7 @@ topprog:
 funinfo:
   | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE { (snd $3,
                                                           snd $5,
-                                                          TyStr(snd $7)) }
+                                                          snd $7) }
 
 params:
   | /* no parameters */               { [] }
@@ -65,7 +65,7 @@ paramlist:
 
 param:
   | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE { (snd $3,
-                                                  TyStr(snd $5)) }
+                                                  snd $5) }
 
 commlines:
   | COMMLINE                        { snd $1 }
@@ -101,7 +101,7 @@ arg:
 outannot:
   | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { (($5, snd $3), None) }
   | OUTSTART LBRACE KIND RBRACE annotelem LSEP LBRACE STRLIT LSEP STRLIT RBRACE SEMI
-      { (($5, snd $3), Some ( snd $8, TyStr(snd $10) )) }
+      { (($5, snd $3), Some ( snd $8, snd $10 )) }
 
 annotelem:
   /* call to a function */
