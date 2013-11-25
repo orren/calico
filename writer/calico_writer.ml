@@ -51,7 +51,7 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
 
 let output_transformation (procNum : int) (return_type : string)
                           (prop : out_annot) : string =
-  let index = string_of_int procNum in  
+  let index = string_of_int procNum in
   "// < output_transformation\n    " ^
   begin match prop with
     | ("id", _)                -> ""
