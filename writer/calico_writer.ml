@@ -60,7 +60,7 @@ let output_transformation (procNum : int) (return_type : string)
     | (prop_name, SideEffect)  -> prop_name
     | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
         Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
-      ";\n        memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
+      ";\n    memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
     end
   ^ ";\n// output_transformation >\n"
 
