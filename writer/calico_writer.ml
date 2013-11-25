@@ -235,7 +235,7 @@ let instrument_function (f : program_element) : string =
 
 let rec name_out_path (modif : string) (path : string list) : string = 
   begin match path with
-    | []      -> raise (Failure "")
+    | []      -> raise (Failure "bad path")
     | [x]     -> modif ^ x
     | x :: xs -> x ^ "/" ^ (name_out_path modif xs)
   end
