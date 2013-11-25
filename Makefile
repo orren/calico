@@ -69,7 +69,7 @@ run_sum:
 	./calico_gen_sum_example
 
 run_mut:
-	gcc -Wall -o calico_gen_mut_example mut_example.c
+	gcc -Wall -o calico_gen_mut_example calico_gen_mut_example.c
 	./calico_gen_mut_example
 
 run_merge:
