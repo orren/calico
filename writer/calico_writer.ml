@@ -5,16 +5,6 @@ open Ast
 let rec repeat (s : string) (n : int) : string =
   if n <= 1 then s else s ^ (repeat s (n - 1))
 
-let fst (tup : 'a * 'b) : 'a =
-  begin match tup with
-    | (x, _) -> x
-  end
-
-let snd (tup : 'a * 'b) : 'b =
-  begin match tup with
-    | (_, x) -> x
-  end
-
 let lbr (indent : int) : string =
   ";\n" ^ (repeat "    " indent)
 
