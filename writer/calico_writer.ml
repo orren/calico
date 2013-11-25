@@ -153,6 +153,16 @@ let initialize_tg_results (default : string) (set : annotation_set) (procNum : i
   (unstar theType) ^ " *t_result" ^ index ^ " = NULL;\n    " ^
   (unstar theType) ^ " *g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
 
+let call_original (k: funKind) (ty: string) (call_to_inner: string) : string =
+  begin match k with
+    | Pure        -> "*orig_result = __" ^ call_to_inner
+    | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));\n    " ^
+      "temp_orig_result = __" ^ call_to_inner ^
+      ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
+      (unstar ty) ^ "))"
+    | SideEffect  -> (if ty = "void" then "" else "orig_result = ") ^ "__" ^ call_to_inner
+  end
+
 let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> "/*\n" ^ s ^ "*/\n"
@@ -160,14 +170,13 @@ let instrument_function (f : program_element) : string =
     | AFun (AComm(comm_text, (name, k, ty), params, asets) as acomm, header, funbody) ->
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
-      let call_to_inner = name ^ "(" ^ String.concat ", "
-        (map fst params) ^ ")" in
+      let call_to_inner = name ^ "(" ^ String.concat ", " (map fst params) ^ ")" in
       (* original version of the function with underscores *)
       ty ^ " __" ^ name ^ header ^ funbody ^ "\n\n" ^
         (* instrumented version *)
         (* TODO: comm_text produces bad comments... would be most useful if
            original annotations were included, or if left off entirely
-        comm_text ^ "\n" ^ *)
+           comm_text ^ "\n" ^ *)
         ty ^ " " ^ name ^ header ^ " {\n" ^
         "    int numProps = " ^ string_of_int (length asets) ^ ";\n" ^
         "    size_t result_sizes[numProps];\n" ^
@@ -180,7 +189,7 @@ let instrument_function (f : program_element) : string =
 
         (* TODO: how to initialize for a pure struct return type? *)
         (if ty = "void" then "" else "    " ^ (unstar ty) ^
-          " *orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));") ^
+            " *orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));") ^
         "\n    " ^ String.concat "\n    "
         (map2 (initialize_tg_results (unstar ty)) asets child_indexes) ^
 
@@ -197,14 +206,7 @@ let instrument_function (f : program_element) : string =
 
         (* parent runs original inputs and waits for children *)
         "    if (procNum == -1) {\n        " ^
-        begin match k with
-          | Pure        -> "*orig_result = __" ^ call_to_inner
-          | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));\n    " ^
-                           " temp_orig_result = __" ^ call_to_inner ^
-                           ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
-                           (unstar ty) ^ "))"
-          | SideEffect  -> (if ty = "void" then "" else "orig_result = ") ^ "__" ^ call_to_inner
-        end
+        (call_original k ty call_to_inner)
         ^ ";\n        for (i = 0; i < numProps; i += 1) {\n" ^
         "            wait(NULL);\n" ^
         "        }\n" ^
