@@ -131,13 +131,18 @@ let property_assertion (return_type : string) (fun_kind : funKind)
   let index = string_of_int procNum in
   begin match prop with
     | ASet(param_props, out_prop, recover) ->
+      let res_ty = match recover with
+        | None -> return_type
+        | Some(_, rec_ty) -> rec_ty
+      in
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
       begin match recover with
         | None               -> output_transformation procNum return_type out_prop
         | Some(expr, rec_ty) -> output_transformation procNum rec_ty out_prop ^
           "*g_result" ^ index ^ " = " ^ expr ^ ";\n    "
       end
-      ^ "    if (*g_result" ^ index ^ " != *t_result" ^ index ^ ") {\n" ^
+
+      ^ "    if (memcmp(g_result" ^ index ^ ", t_result" ^ index ^ ", sizeof(" ^ res_ty ^ ")) != 0) {\n" ^
       "        printf(\"a property has been violated:\\ninput_prop: " ^
       (String.concat ", " (map name_of_param_annot param_props)) ^
       "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
