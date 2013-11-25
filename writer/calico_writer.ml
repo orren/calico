@@ -31,7 +31,7 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
 
 let write_param (param : param_info) : string =
   match param with
-    | (name, TyStr(ty)) -> ty ^ " " ^ name
+    | (name, ty) -> ty ^ " " ^ name
 
 let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: string)
                         (params: param_info list) (recover : bool) : string =
@@ -66,7 +66,7 @@ let output_transformation (procNum : int) (return_type : string)
 
 let input_transformation (param : param_info) (prop : param_annot) : string =
   begin match (param, prop) with
-    | ((param_name, TyStr(ty)), (name, kind, inputs)) ->
+    | ((param_name, ty), (name, kind, inputs)) ->
       let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
       "// < input_transformation\n        " ^
         begin match kind with
@@ -91,7 +91,7 @@ let recover_t_result (procNum : int) (aset : annotation_set) : string =
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   let index = string_of_int procNum in
   begin match f with
-    | AComm(_, (name, kind, TyStr(ty)), params, asets) ->
+    | AComm(_, (name, kind, ty), params, asets) ->
         let aset = nth asets procNum in
         let (pAnnots, recover) = begin match aset with
           | ASet (pas, _, Some (_)) -> (pas, true)
@@ -134,7 +134,7 @@ let property_assertion (return_type : string) (fun_kind : funKind)
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
       begin match recover with
         | None               -> output_transformation procNum return_type out_prop
-        | Some(expr, TyStr(rec_ty)) -> "*g_result" ^ index ^ " = " ^ expr ^ ";\n    " ^
+        | Some(expr, rec_ty) -> "*g_result" ^ index ^ " = " ^ expr ^ ";\n    " ^
                                 output_transformation procNum rec_ty out_prop
       end
       ^ "    if (*g_result" ^ index ^ " != *t_result" ^ index ^ ") {\n" ^
@@ -150,7 +150,7 @@ let unstar (type_str : string) : string =
 
 let initialize_tg_results (default : string) (set : annotation_set) (procNum : int) : string =
   let theType = begin match set with
-    | ASet(_, _, Some (_, TyStr(ty))) -> ty
+    | ASet(_, _, Some (_, ty)) -> ty
     | ASet(_, _, None)                -> default
   end in
   let index = string_of_int procNum in
@@ -162,7 +162,7 @@ let instrument_function (f : program_element) : string =
   begin match f with
     | ComStr(s) -> "/*\n" ^ s ^ "*/\n"
     | SrcStr(s) -> s
-    | AFun (AComm(comm_text, (name, k, TyStr(ty)), params, asets) as acomm, header, funbody) ->
+    | AFun (AComm(comm_text, (name, k, ty), params, asets) as acomm, header, funbody) ->
       (* each child process will have a number *)
       let child_indexes = (range_list 0 ((length asets) - 1) []) in
       let call_to_inner = name ^ "(" ^ String.concat ", "

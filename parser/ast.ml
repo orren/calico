@@ -10,7 +10,7 @@
 type funKind = Pure
                | SideEffect
                | PointReturn
-type ty_str = TyStr of string
+type ty_str = string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind
 type state_recovery =  string * ty_str
@@ -51,20 +51,20 @@ let str_of_pair (p: annotation_set) : string =
   match p with
     | ASet (annot, (str, _), None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
-    | ASet (annot, (str, _), Some(s, TyStr(ty))) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, (str, _), Some(s, ty)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
       "\nSTATE recovery expr: " ^ s ^ ", of type: " ^ ty ^ "\n"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with
-    | (name, k, TyStr(ty)) ->
+    | (name, k, ty) ->
       ("Function name: " ^ name ^ " Return Type: " ^ ty ^ " Fun kind: " ^
           (str_of_kind k))
 
 
 let str_of_param (p : param_info) : string =
   match p with
-    | (name, TyStr(ty)) ->
+    | (name, ty) ->
       "Param name: " ^ name ^ " Type: " ^ ty
 
 let str_of_annot (ac : annotated_comment) : string =
