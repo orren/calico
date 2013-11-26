@@ -47,7 +47,7 @@ let output_transformation (procNum : int) (return_type : string)
     | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
         Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
       ";\n    memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
-    end
+  end
   ^ ";\n// output_transformation >\n"
 
 let input_transformation (param : param_info) (prop : param_annot) : string =
@@ -68,14 +68,15 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
 
 let recover_t_result (procNum : int) (aset : annotation_set) : string =
   begin match aset with
-    | ASet(_, _, Some(expr, _)) -> "        *t_result" ^ string_of_int procNum ^
-                                   " = " ^ expr ^ ";\n"
+    | ASet(_, _, Some(ptr, size)) -> "        memcpy(t_result" ^ string_of_int procNum ^
+      ", " ^ ptr ^ ", " ^ size ^ ");\n"
     | ASet(_, _, None)          -> ""
   end
 
-(* Requires param and property list *)
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   let index = string_of_int procNum in
+  "    if (procNum == " ^ index ^ ") {\n" ^
+    "        t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n" ^
   begin match f with
     | AComm((name, kind, ty), params, asets) ->
         let aset = nth asets procNum in
@@ -83,8 +84,6 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
           | ASet (pas, _, Some (_)) -> (pas, true)
           | ASet (pas, _, None)     -> (pas, false)
         end in
-        "    if (procNum == " ^ index ^ ") {\n" ^
-        "        t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n" ^
         (* apply input transformations *)
         String.concat ";\n        "
           (map2 input_transformation params pAnnots) ^
@@ -117,18 +116,20 @@ let property_assertion (return_type : string) (fun_kind : funKind)
   let index = string_of_int procNum in
   begin match prop with
     | ASet(param_props, out_prop, recover) ->
-      let res_ty = match recover with
-        | None -> return_type
-        | Some(_, rec_ty) -> rec_ty
+      let size_expr = match recover with
+        | None -> "sizeof(" ^ return_type ^ ")"
+        | Some(_, expr) -> expr
       in
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
       begin match recover with
         | None               -> output_transformation procNum return_type out_prop
-        | Some(expr, rec_ty) -> output_transformation procNum rec_ty out_prop ^
-          "*g_result" ^ index ^ " = " ^ expr ^ ";\n    "
+        | Some(ptr, size)  -> output_transformation procNum size out_prop ^
+          "        memcpy(g_result" ^ string_of_int procNum ^
+          ", " ^ ptr ^ ", " ^ size ^ ");\n"
       end
 
-      ^ "    if (memcmp(g_result" ^ index ^ ", t_result" ^ index ^ ", sizeof(" ^ res_ty ^ ")) != 0) {\n" ^
+
+      ^ "    if (memcmp(g_result" ^ index ^ ", t_result" ^ index ^ ", " ^ size_expr ^ ")) {\n" ^
       "        printf(\"a property has been violated:\\ninput_prop: " ^
       (String.concat ", " (map name_of_param_annot param_props)) ^
       "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
@@ -140,14 +141,14 @@ let unstar (type_str : string) : string =
   Str.global_replace (Str.regexp "*") "" type_str
 
 let initialize_tg_results (default : string) (set : annotation_set) (procNum : int) : string =
-  let theType = begin match set with
-    | ASet(_, _, Some (_, ty)) -> ty
-    | ASet(_, _, None)                -> default
+  let (size_expr, typ) = begin match set with
+    | ASet(_, _, Some (_, size)) -> (size, "void")
+    | ASet(_, _, None)           -> ("sizeof(" ^ default ^ ")", unstar default)
   end in
   let index = string_of_int procNum in
-  "result_sizes[" ^ index ^ "] = sizeof(" ^ theType ^ ");\n    " ^
-  (unstar theType) ^ " *t_result" ^ index ^ " = NULL;\n    " ^
-  (unstar theType) ^ " *g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
+  "result_sizes[" ^ index ^ "] = " ^ size_expr ^ ";\n    " ^
+    typ ^ "* t_result" ^ index ^ " = NULL;\n    " ^
+    typ ^ "* g_result" ^ index ^ " = malloc(result_sizes[" ^ index ^ "]);\n"
 
 let call_original (k: funKind) (ty: string) (call_to_inner: string) : string =
   begin match k with

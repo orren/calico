@@ -8,7 +8,8 @@ extern void exit(int);
  * @fun-info { double_int_ptr, SideEffect, "void" } ;
  * @param-info { in, "int*" } ;
  * @input-prop { SideEffect } negate(in) ;
- * @output-prop { SideEffect } negate(in), { "*in", "int" } ;
+ * @output-prop { SideEffect } negate(in) ;
+ * @state-recover { in, "sizeof(int)" } ;
  */
 void double_int_ptr ( int* in ) {
   *in = *in * 2;
