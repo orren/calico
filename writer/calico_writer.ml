@@ -19,10 +19,6 @@ let rec merge (l1:'a list) (l2:'a list) : 'a list =
     | ((n1 :: rest1), (n2 :: rest2)) -> n1 :: n2 :: (merge rest1 rest2)
   end ;;
 
-let write_param (param : param_info) : string =
-  match param with
-    | (name, ty) -> ty ^ " " ^ name
-
 let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: string)
                         (params: param_info list) (recover : bool) : string =
   let index = string_of_int procNum in
