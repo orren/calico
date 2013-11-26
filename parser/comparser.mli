@@ -1,6 +1,5 @@
 type token =
   | EOF
-  | NL of (Range.t)
   | CTRL of (Range.t * string)
   | COPEN of (Range.t)
   | CCLOS of (Range.t)
@@ -15,6 +14,7 @@ type token =
   | OUTSTART of (Range.t)
   | FUNSTART of (Range.t)
   | PARAMSTART of (Range.t)
+  | STATEREC of (Range.t)
   | IDENT of (Range.t * string)
   | STRLIT of (Range.t * string)
   | INT of (Range.t * string)

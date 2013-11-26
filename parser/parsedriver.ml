@@ -1,5 +1,6 @@
 open Ast
 open Str
+open Lexing
 
 (* Given the information in a comment annotation and a raw string of source,
    returns the the split of everything up to the end of the first
@@ -40,21 +41,20 @@ let parse_of_program (pelems: program_element list) : program_element list =
     end
   and
    pair_rec com_str src_str rest acc =
+    let com_buf = from_string com_str in
     try
       (* (Printf.printf "com_str: %s\n" com_str); *)
       (* (Printf.printf "src_str: %s\n" src_str); *)
       let (acomm: annotated_comment) =
-        Comparser.toplevel Comlexer.token (Lexing.from_string com_str) in
+        Comparser.toplevel Comlexer.token com_buf in
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
       let srcsplit = split_src acomm src_str in
-      let (header, funbody, src_rest) = (Srclexer.funparse (Lexing.from_string srcsplit)) in
+      let (header, funbody, src_rest) = (Srclexer.funparse (from_string srcsplit)) in
       lst_rec rest (SrcStr(src_rest) :: AFun (acomm, header, funbody) :: ComStr(com_str) :: acc)
     with Parsing.Parse_error ->
-      (Printf.printf "A parsing error occured parsing the comment: %s\n"
-         com_str); []
+      (Printf.printf "A parsing error occured parsing the comment: %s\nError at token: %s\nLine: %d\n"
+         com_str (lexeme com_buf) (com_buf.lex_curr_p.pos_lnum)); []
       | Failure(s) ->
-        (*  Printf.printf "A failure error occured parsing the comment: %s: %s\n"
-            s com_str); *)
         (* we may have run out of src in case a nested comment appeared within
            a function body. *)
         match rest with

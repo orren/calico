@@ -10,7 +10,6 @@ open Ast;;
  */
 
 %token EOF
-%token <Range.t> NL
 %token <Range.t * string> CTRL
 %token <Range.t> COPEN             /* '/' '*' */
 %token <Range.t> CCLOS             /* '*' '/' */
@@ -25,6 +24,7 @@ open Ast;;
 %token <Range.t> OUTSTART          /* output prop starter */
 %token <Range.t> FUNSTART          /* fun info starter */
 %token <Range.t> PARAMSTART        /* param info starter */
+%token <Range.t> STATEREC          /* recovery annotation */
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
 %token <Range.t * string> INT      /* integer */
@@ -48,41 +48,41 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines funinfo SEMI params asets   { AComm ($2, $4, $5) }
+  | commlines funinfo params asets   { AComm ($2, $3, $4) }
 
 funinfo:
-  | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE { (snd $3,
-                                                          snd $5,
-                                                          snd $7) }
+  | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE SEMI
+      { (snd $3, snd $5, snd $7) }
 
 params:
-  | /* no parameters */               { [] }
-  | paramlist SEMI                    { List.rev $1 }
+  | /* no parameters */           { [] }
+  | paramlist                     { $1 }
 
 paramlist:
-  | param                             { [$1] }
-  | paramlist SEMI param              { $3 :: $1 }
+  | param                        { [$1] }
+  | param paramlist              { $1 :: $2 }
 
 param:
-  | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE { (snd $3,
-                                                  snd $5) }
+  | PARAMSTART LBRACE IDENT LSEP STRLIT RBRACE SEMI { (snd $3,
+                                                       snd $5) }
 
 commlines:
   | COMMLINE                        { snd $1 }
   | COMMLINE commlines              { (snd $1) ^ $2 }
 
 asets:
-  | aset                           { [$1] }
-  | aset asets                    { $1 :: $2 }
+  | aset                        { [$1] }
+  | aset asets                  { $1 :: $2 }
 
 aset:
-  | inannot SEMI outannot           { ASet ($1, fst $3, snd $3) }
+  | inannot outannot               { ASet ($1, $2, None) }
+  | inannot outannot staterec      { ASet ($1, $2, Some(fst $3, snd $3)) }
 
 inannot:
-  | INSTART paramannots                 { $2 }
+  | INSTART paramannots SEMI              { $2 }
 
 paramannots:
-  | paramannot                          { [$1] }
+  | paramannot                              { [$1] }
   | paramannot LSEP paramannots             { $1 :: $3 }
 
 paramannot:
@@ -99,9 +99,10 @@ arg:
   | STRLIT      { snd $1 }
 
 outannot:
-  | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { (($5, snd $3), None) }
-  | OUTSTART LBRACE KIND RBRACE annotelem LSEP LBRACE STRLIT LSEP STRLIT RBRACE SEMI
-      { (($5, snd $3), Some ( snd $8, snd $10 )) }
+  | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { ($5, snd $3) }
+
+staterec:
+  | STATEREC LBRACE annotelem LSEP annotelem RBRACE SEMI  { ($3, $5) }
 
 annotelem:
   /* call to a function */

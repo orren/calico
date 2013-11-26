@@ -13,7 +13,7 @@ type funKind = Pure
 type ty_str = string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind
-type state_recovery =  string * ty_str
+type state_recovery =  string * string (* name, size *)
 type annotation_set = ASet of param_annot list * out_annot * (state_recovery option)
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
@@ -53,7 +53,7 @@ let str_of_pair (p: annotation_set) : string =
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
     | ASet (annot, (str, _), Some(s, ty)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
-      "\nSTATE recovery expr: " ^ s ^ ", of type: " ^ ty ^ "\n"
+      "\nSTATE recovery ptr: " ^ s ^ ", size expr: " ^ ty ^ "\n"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with

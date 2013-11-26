@@ -36,10 +36,11 @@ let fun_info = ['@'] whitespace* "fun-info"
 let param_info = ['@'] whitespace* "param-info"
 let in_prop  = ['@'] whitespace* "input-prop"
 let out_prop = ['@'] whitespace* "output-prop"
+let state_rec = ['@'] whitespace* "state-recover"
 
 (* Other characters we care about... *)
 let com_char = ['*' '%' '/' ':' '`' '-' '?' '\\' '!' '\'' '#' '<' '>' '.' 'a'-'z' 'A'-'Z' '0'-'9']
-let com_line = (com_char | linewhitespace)+ nl
+let com_line = linewhitespace* com_char+ (linewhitespace|com_char)* nl
 let kind_str = "PointReturn" | "Pure" | "SideEffect"
 
 (* Returns a token of type as specified in parser.mly
@@ -49,18 +50,20 @@ let kind_str = "PointReturn" | "Pure" | "SideEffect"
 *)
 rule token = parse
   | eof                                          { EOF }
-  | whitespace+                                  { token lexbuf }  (* skip whitespace *)
+  | linewhitespace+                              { token lexbuf }  (* skip whitespace *)
+  | nl                                           { new_line lexbuf;
+                                                   token lexbuf }
   | "/*" ['*']?                                  { COPEN (lex_range lexbuf) }
   | ['*']? "*/"                                  { CCLOS (lex_range lexbuf) }
   | (['*']? whitespace* in_prop) | in_prop       { INSTART  (lex_range lexbuf) }
   | (['*']? whitespace* out_prop) | out_prop     { OUTSTART (lex_range lexbuf) }
   | (['*']? whitespace* fun_info) | fun_info     { FUNSTART  (lex_range lexbuf) }
   | (['*']? whitespace* param_info) | param_info { PARAMSTART (lex_range lexbuf) }
+  | (['*']? whitespace* state_rec) | state_rec   { STATEREC (lex_range lexbuf) }
   | idchar (digit|idchar)*                       { find_kwd lexbuf }
   | ['-']? pdigit (digit)*                       { INT (lex_range lexbuf, lexeme lexbuf) }
   | com_line                                     { COMMLINE (lex_range lexbuf, lexeme lexbuf) }
   | '"'                                          { STRLIT (lex_range lexbuf, str "" lexbuf) }
-  | nl                                           { NL (lex_range lexbuf) }
   | ','                                          { LSEP (lex_range lexbuf) }
   | '('                                          { LPAREN (lex_range lexbuf) }
   | ')'                                          { RPAREN (lex_range lexbuf) }
