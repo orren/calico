@@ -107,8 +107,8 @@ let fprint_results (procNum : int) (fun_kind : funKind) (return_type : string) :
                   end in
   begin match indicator with
   | "" -> ""
-  | _  -> "        printf(\"g(f(x)): " ^ indicator ^ "\\nf(t(x)): " ^ indicator ^
-          "\\n\", *g_result" ^ index ^ ", *t_result" ^ index ^ ");"
+  | _  -> "" (* "        printf(\"g(f(x)): " ^ indicator ^ "\\nf(t(x)): " ^ indicator ^
+          "\\n\", *g_result" ^ index ^ ", *t_result" ^ index ^ ");" *)
   end
 
 let property_assertion (return_type : string) (fun_kind : funKind)
