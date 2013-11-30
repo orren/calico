@@ -107,7 +107,8 @@ static void insertionsort(u_char *, size_t, size_t,
  * @param-info { size, "size_t" } ;
  * @param-info { cmp, "" } ;
  * @input-prop { SideEffect } permute(base, nmemb, size), { Pure } id, { Pure } id, { Pure } id ;
- * @output-prop { Pure } id, { "base", "void*" } ;
+ * @output-prop { Pure } id ;
+ * @state-recover { base, "size*nmemb" } ;
  */
 int
 mergesort(base, nmemb, size, cmp)
