@@ -26,7 +26,7 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
   let all_names = (map get_p_name params) in
   "// < call_inner_function\n        " ^
     begin match kind with
-      | Pure        -> (if not recover then "*t_result" ^ index ^ " = __" else "") ^ name ^
+      | Pure        -> (if not recover then "*t_result" ^ index ^ " = " else "") ^ "__" ^ name ^
                        "(" ^ String.concat ", " all_names ^ ")"
       | SideEffect  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
       | PointReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
