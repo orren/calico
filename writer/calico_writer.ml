@@ -216,13 +216,18 @@ let instrument_function (f : program_element) : string =
         String.concat "\n" (map2 (property_assertion ty k) asets child_indexes) ^ "\n" ^
 
         (* cleanup *)
+        "    for (i = 0; i < numProps; i++) {\n" ^
+        "        if (shmctl(shmids[i], IPC_RMID, NULL) < 0) {\n" ^
+        "            perror(\"shmctl\");\n" ^
+        "        }\n" ^
+        "    }\n" ^
         "    free(shmids);\n" ^
         "    return " ^ (if String.compare ty "void" = 0 then "" else
                         (if k == Pure then "*" else "") ^ "orig_result") ^
         ";\n" ^ "}"
   end
 
-let rec name_out_path (modif : string) (path : string list) : string = 
+let rec name_out_path (modif : string) (path : string list) : string =
   begin match path with
     | []      -> raise (Failure "bad path")
     | [x]     -> modif ^ x
