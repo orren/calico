@@ -30,7 +30,7 @@ all_mut: build_main rwr_mut run_mut
 all_merge: build_main rwr_merge run_merge
 
 merge_small: build_main rwr_merge
-	gcc -Wall -I . -o merge_small martirank/calico_gen_merge.c small_merge_example.c
+	gcc -Wall -I . -o merge_small small_merge_example.c
 
 build_main: parser_pre calico.ml
 	ocamlc str.cma -I writer/ -I parser/ -o calicoMain parser/ast.ml $(INTERFACES) $(SOURCES) calico.ml

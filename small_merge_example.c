@@ -7,19 +7,23 @@ void arr_print (int arr [], int length) {
   for (i = 0; i < (length - 1); i++) {
     printf("%d, ", arr[i]);
   }
+  printf("%d ", arr[length - 1]);
   printf(" }\n");
 }
 
 int compare_ints(const void* a, const void* b) {
-  return a > b ? 1 : -1;
+  int a_val = * (int *) a;
+  int b_val = * (int *) b;
+  return (a_val < b_val) ? -1 : ((a_val == b_val) ? 0 : 1);
 }
 
 int main () {
 
   int arr [] = {1, 2, 3, 7, 34, 0, 12};
-  printf("*** input: \n\t");
+  printf("*** input: \n");
   arr_print(arr, 7);
   mergesort(arr, 7, sizeof(int), compare_ints);
+  printf("*** output: \n");
   arr_print(arr, 7);
 
   return 0;
