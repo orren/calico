@@ -190,7 +190,10 @@ let instrument_function (f : program_element) : string =
         "\n" ^
         "    for (i = 0; i < numProps; i += 1) {\n" ^
         "        if (procNum == -1) {\n" ^
-        "            shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666);\n" ^
+        "            if ((shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666)) < 0) {\n" ^
+        "                perror(\"shmget\");\n" ^
+        "                exit(1);\n" ^
+        "            }\n" ^
         "            if (0 == fork()) {\n" ^
         "                procNum = i;\n" ^
         "                break;\n" ^
