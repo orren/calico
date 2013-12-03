@@ -25,6 +25,7 @@ open Ast;;
 %token <Range.t> FUNSTART          /* fun info starter */
 %token <Range.t> PARAMSTART        /* param info starter */
 %token <Range.t> STATEREC          /* recovery annotation */
+%token <Range.t> EQFUN             /* equality function */
 %token <Range.t * string> IDENT    /* identifier */
 %token <Range.t * string> STRLIT   /* string literal */
 %token <Range.t * string> INT      /* integer */
@@ -75,8 +76,9 @@ asets:
   | aset asets                  { $1 :: $2 }
 
 aset:
-  | inannot outannot               { ASet ($1, $2, None) }
-  | inannot outannot staterec      { ASet ($1, $2, Some(fst $3, snd $3)) }
+  | inannot outannot                 { ASet ($1, $2, None, None) }
+  | inannot outannot staterec        { ASet ($1, $2, Some($3), None) }
+  | inannot outannot staterec eqfun  { ASet ($1, $2, Some($3), Some($4)) }
 
 inannot:
   | INSTART paramannots SEMI              { $2 }
@@ -102,7 +104,11 @@ outannot:
   | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { ($5, snd $3) }
 
 staterec:
-  | STATEREC LBRACE annotelem LSEP annotelem RBRACE SEMI  { ($3, $5) }
+  | STATEREC LBRACE annotelem LSEP annotelem LSEP arg
+      RBRACE SEMI  { ($3, $5, $7) }
+
+eqfun:
+  | EQFUN LBRACE IDENT RBRACE SEMI { snd $3 }
 
 annotelem:
   /* call to a function */

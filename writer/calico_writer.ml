@@ -39,6 +39,7 @@ let output_transformation (procNum : int) (return_type : string)
                           (prop : out_annot) : string =
   let index = string_of_int procNum in
   "// < output_transformation\n    " ^
+  (* TODO: The following is not compatible with state recovery assertions *)
   begin match prop with
     | ("id", _)                -> ""
     | (prop_name, Pure)        -> "*g_result" ^ index ^ " = " ^
@@ -67,11 +68,12 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
   end
 
 let recover_t_result (procNum : int) (aset : annotation_set) : string =
-  begin match aset with
-    | ASet(_, _, Some(ptr, size)) -> "        memcpy(t_result" ^ string_of_int procNum ^
-      ", " ^ ptr ^ ", " ^ size ^ ");\n"
-    | ASet(_, _, None)          -> ""
-  end
+  match aset with
+    | ASet(_, _, Some(ptr, size, count), _) ->
+      "        memcpy(t_result" ^ string_of_int procNum ^
+        ", " ^ ptr ^ ", " ^ size ^ "*" ^ count ^ ");\n"
+    | ASet(_, _, _, _)          -> ""
+
 
 let transformed_call (f : annotated_comment) (procNum : int) : string =
   let index = string_of_int procNum in
@@ -81,8 +83,8 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
     | AComm((name, kind, ty), params, asets) ->
         let aset = nth asets procNum in
         let (pAnnots, recover) = begin match aset with
-          | ASet (pas, _, Some (_)) -> (pas, true)
-          | ASet (pas, _, None)     -> (pas, false)
+          | ASet (pas, _, Some (_), _) -> (pas, true)
+          | ASet (pas, _, None, _)     -> (pas, false)
         end in
         (* apply input transformations *)
         String.concat ";\n        "
@@ -92,8 +94,8 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
         (* recover result if necessary *)
         recover_t_result procNum aset ^
         (* clean up *)
-        "        shmdt(t_result" ^ index ^ ");\n" ^
-        "        exit(0);\n" ^
+        "        shmdt(t_result" ^ index ^ ");\n" ^ 
+       "        exit(0);\n" ^
         "    }\n"
   end
 
@@ -115,27 +117,35 @@ let property_assertion (return_type : string) (fun_kind : funKind)
     (prop : annotation_set) (procNum : int) : string =
   let index = string_of_int procNum in
   begin match prop with
-    | ASet(param_props, out_prop, recover) ->
-      let size_expr = match recover with
-        | None -> "sizeof(" ^ return_type ^ ")"
-        | Some(_, expr) -> expr
+    | ASet(param_props, out_prop, recover, eq) ->
+      let (elem_size, eqfun, count) = match (recover, eq) with
+        | (None, _) -> ("sizeof(" ^ return_type ^ ")", "memcmp", "1")
+        | (Some(_, expr, count), None) -> (expr, "memcmp", count)
+        | (Some(_, expr, count), Some(eq)) -> (expr, eq, count)
       in
+
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
+        output_transformation procNum return_type out_prop ^
+
       begin match recover with
-        | None               -> output_transformation procNum return_type out_prop
-        | Some(ptr, size)  -> output_transformation procNum size out_prop ^
-          "    memcpy(g_result" ^ string_of_int procNum ^
-          ", " ^ ptr ^ ", " ^ size ^ ");\n"
+        | None                 -> ""
+        | Some(ptr, _, count)  -> "    memcpy(g_result" ^ string_of_int procNum ^
+          ", " ^ ptr ^ ", " ^ elem_size ^ "*" ^ count ^ ");\n"
       end
 
-
-      ^ "    if (memcmp(g_result" ^ index ^ ", t_result" ^ index ^ ", " ^ size_expr ^ ")) {\n" ^
-      "        printf(\"a property has been violated:\\ninput_prop: " ^
-      (String.concat ", " (map name_of_param_annot param_props)) ^
-      "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
-      "        exit(1);\n" ^
-      fprint_results procNum fun_kind return_type ^
-      "\n    }\n"
+        (* Write out a loop to call the appropriate equality function on each
+           member of the memory block to be processed *)
+      ^ "    int _i = 0;\n" ^
+        "    for (; _i < " ^ count ^ "; _i++) {\n" ^
+        "      if (" ^ eqfun ^ "(g_result" ^ index ^ " + (_i*" ^ elem_size ^ "), " ^
+        "t_result" ^ index ^ " + (_i*" ^ elem_size ^ "), " ^ elem_size ^ ")) {\n" ^
+        "        printf(\"a property has been violated:\\ninput_prop: " ^
+        (String.concat ", " (map name_of_param_annot param_props)) ^
+        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
+        "        exit(1);\n" ^
+        fprint_results procNum fun_kind return_type ^
+        "      }\n" ^
+        "    }\n"
   end
 
 let unstar (type_str : string) : string =
@@ -143,8 +153,8 @@ let unstar (type_str : string) : string =
 
 let initialize_tg_results (default : string) (set : annotation_set) (procNum : int) : string =
   let (size_expr, typ) = begin match set with
-    | ASet(_, _, Some (_, size)) -> (size, "void")
-    | ASet(_, _, None)           -> ("sizeof(" ^ default ^ ")", unstar default)
+    | ASet(_, _, Some (_, size, count), _) -> (size ^ "*" ^ count, "void")
+    | ASet(_, _, _, _)           -> ("sizeof(" ^ default ^ ")", unstar default)
   end in
   let index = string_of_int procNum in
   "result_sizes[" ^ index ^ "] = " ^ size_expr ^ ";\n    " ^
