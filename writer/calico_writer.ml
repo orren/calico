@@ -124,7 +124,7 @@ let property_assertion (return_type : string) (fun_kind : funKind)
       begin match recover with
         | None               -> output_transformation procNum return_type out_prop
         | Some(ptr, size)  -> output_transformation procNum size out_prop ^
-          "        memcpy(g_result" ^ string_of_int procNum ^
+          "    memcpy(g_result" ^ string_of_int procNum ^
           ", " ^ ptr ^ ", " ^ size ^ ");\n"
       end
 
@@ -133,6 +133,7 @@ let property_assertion (return_type : string) (fun_kind : funKind)
       "        printf(\"a property has been violated:\\ninput_prop: " ^
       (String.concat ", " (map name_of_param_annot param_props)) ^
       "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
+      "        exit(1);\n" ^
       fprint_results procNum fun_kind return_type ^
       "\n    }\n"
   end
