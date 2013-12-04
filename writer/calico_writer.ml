@@ -95,7 +95,7 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
         recover_t_result procNum aset ^
         (* clean up *)
         "        shmdt(t_result" ^ index ^ ");\n" ^ 
-       "        exit(0);\n" ^
+        "        exit(0);\n" ^
         "    }\n"
   end
 
@@ -219,7 +219,6 @@ let instrument_function (f : program_element) : string =
         "            wait(NULL);\n" ^
         "        }\n" ^
         "    }\n\n" ^
-
         (* children run transformed inputs and record the result in shared memory *)
         String.concat "\n" (map (transformed_call acomm) child_indexes) ^ "\n" ^
 
@@ -232,6 +231,8 @@ let instrument_function (f : program_element) : string =
         "            perror(\"shmctl\");\n" ^
         "        }\n" ^
         "    }\n" ^
+      String.concat "\n" (map (fun i -> "    shmdt(t_result" ^ (string_of_int i) ^ ");")
+                            child_indexes) ^ "\n" ^
         "    free(shmids);\n" ^
         "    return " ^ (if String.compare ty "void" = 0 then "" else
                         (if k == Pure then "*" else "") ^ "orig_result") ^

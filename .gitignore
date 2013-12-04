@@ -3,6 +3,7 @@
 *\#*
 *.cm*
 *.out
+output.*
 calicoMain
 calico_gen*
 core
