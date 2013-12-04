@@ -100,7 +100,7 @@ let transformed_call (f : annotated_comment) (procNum : int) : string =
   end
 
 let fprint_results (procNum : int) (fun_kind : funKind) (return_type : string) : string =
-  let index = string_of_int procNum in
+  (* let index = string_of_int procNum in *)
   let indicator = begin match return_type with
                   | "int"    -> "%d"
                   | "double" -> "%f"
@@ -135,10 +135,10 @@ let property_assertion (return_type : string) (fun_kind : funKind)
 
         (* Write out a loop to call the appropriate equality function on each
            member of the memory block to be processed *)
-      ^ "    int _i = 0;\n" ^
-        "    for (; _i < " ^ count ^ "; _i++) {\n" ^
-        "      if (" ^ eqfun ^ "(g_result" ^ index ^ " + (_i*" ^ elem_size ^ "), " ^
-        "t_result" ^ index ^ " + (_i*" ^ elem_size ^ "), " ^ elem_size ^ ")) {\n" ^
+      ^ "    for (i = 0; i < " ^ count ^ "; i++) {\n" ^
+        "      if (" ^ eqfun ^ "(g_result" ^ index ^ " + (i*" ^ elem_size ^ "), " ^
+        "t_result" ^ index ^ " + (i*" ^ elem_size ^ ")" ^ 
+      (if eqfun = "memcmp" then ", " ^ elem_size else "") ^ ")) {\n" ^
         "        printf(\"a property has been violated:\\ninput_prop: " ^
         (String.concat ", " (map name_of_param_annot param_props)) ^
         "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
