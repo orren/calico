@@ -8,6 +8,7 @@ calicoMain
 calico_gen*
 core
 merge_small
+merge_original
 test_SUT_original
 sum_example_original
 sftp-config.json
