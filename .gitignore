@@ -10,3 +10,8 @@ merge_small
 test_SUT_original
 sum_example_original
 sftp-config.json
+*.aux
+*.fdb_latexmk
+*.log
+*.pdf
+*.synctex.gz
