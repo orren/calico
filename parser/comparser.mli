@@ -15,6 +15,7 @@ type token =
   | FUNSTART of (Range.t)
   | PARAMSTART of (Range.t)
   | STATEREC of (Range.t)
+  | EQFUN of (Range.t)
   | IDENT of (Range.t * string)
   | STRLIT of (Range.t * string)
   | INT of (Range.t * string)

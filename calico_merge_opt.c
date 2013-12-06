@@ -1,4 +1,6 @@
-/*-
+#include "calico_prop_library.h"
+/*
+-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -34,25 +36,43 @@
  * SUCH DAMAGE.
  */
 
+
+
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)merge.c	8.2 (Berkeley) 2/14/94";
-#endif /* LIBC_SCCS and not lint */
+#endif 
+/*
+ LIBC_SCCS and not lint */
+
+
 #include <sys/cdefs.h>
 
 
+
 /*
+
  * Hybrid exponential search/linear search merge sort with hybrid
  * natural/pairwise first pass.  Requires about .3% more comparisons
  * for random data than LSMS with pairwise first pass alone.
  * It works for objects as small as two bytes.
  */
 
-#define NATURAL
-#define THRESHOLD 16    /* Best choice for natural merge cut-off. */
 
-/* #define NATURAL to get hybrid natural merge.
+
+#define NATURAL
+#define THRESHOLD 16    
+/*
+ Best choice for natural merge cut-off. */
+
+
+
+
+/*
+ #define NATURAL to get hybrid natural merge.
  * (The default is pairwise merging.)
  */
+
+
 
 #include <sys/types.h>
 
@@ -85,20 +105,34 @@ static void insertionsort(u_char *, size_t, size_t,
         *dst++ = *src++;        \
     while (i -= 1)
 
+
 /*
+
  * Find the next possible pointer head.  (Trickery for forcing an array
  * to do double duty as a linked list when objects do not align with word
  * boundaries.
  */
-/* Assumption: PSIZE is a power of 2. */
+
+
+
+/*
+ Assumption: PSIZE is a power of 2. */
+
+
 #define EVAL(p) (u_char **)                        \
     ((u_char *)0 +                            \
         (((u_char *)p + PSIZE - 1 - (u_char *) 0) & ~(PSIZE - 1)))
 
+
 /*
+
  * Arguments are as for qsort.
  */
-/**
+
+
+
+/*
+*
  * Annotation comment
  *
  * @fun-info { mergesort, Pure, "int" } ;
@@ -111,8 +145,8 @@ static void insertionsort(u_char *, size_t, size_t,
  * @state-recover { base, "size", "nmemb" } ;
  * @equality-op { cmp } ;
  */
-int
-mergesort(base, nmemb, size, cmp)
+
+int __mergesort(base, nmemb, size, cmp)
     void *base;
     size_t nmemb;
     size_t size;
@@ -250,6 +284,89 @@ COPY:                    b = t;
     return (0);
 }
 
+int __calico_run_count = 0;
+
+int mergesort(base, nmemb, size, cmp)
+    void *base;
+    size_t nmemb;
+    size_t size;
+    int (*cmp)(const void *, const void *);
+ {
+   __calico_run_count++;
+    int numProps = 1;
+    size_t result_sizes[numProps];
+    int* shmids = malloc(numProps * sizeof(int));
+    int procNum = -1;
+    int i;
+    int *orig_result = malloc(sizeof(int));
+    result_sizes[0] = size*nmemb;
+    void* t_result0 = NULL;
+    void* g_result0 = malloc(result_sizes[0]);
+
+    for (i = 0; i < numProps; i += 1) {
+        if (procNum == -1) {
+            if ((shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666)) < 0) {
+                perror("shmget");
+                exit(1);
+            }
+            t_result0 = shmat(shmids[0], NULL, 0);
+            memcpy(t_result0, base, size*nmemb);
+            if (0 == fork()) {
+                procNum = i;
+                break;
+            }
+        }
+    }
+
+    if (procNum == -1) {
+        *orig_result = __mergesort(base, nmemb, size, cmp);
+        for (i = 0; i < numProps; i += 1) {
+            wait(NULL);
+        }
+    }
+
+    if (procNum == 0) {
+        t_result0 = shmat(shmids[0], NULL, 0);
+// < input_transformation
+        permute(t_result0, nmemb, size);
+// input_transformation >;
+        // < input_transformation
+        ;
+// input_transformation >;
+        // < input_transformation
+        ;
+// input_transformation >;
+        // < input_transformation
+        ;
+// input_transformation >// < call_inner_function
+        __mergesort(t_result0, nmemb, size, cmp);
+// call_inner_function >
+        shmdt(t_result0);
+        exit(0);
+    }
+
+    // < output_transformation
+    ;
+// output_transformation >
+    for (i = 0; i < nmemb; i++) {
+      if (cmp(base + (i*size), t_result0 + (i*size))) {
+        printf("a property has been violated:\ninput_prop: permute, id, id, id\noutput_prop: id\n");
+        exit(1);
+      }
+    }
+
+    for (i = 0; i < numProps; i++) {
+        if (shmctl(shmids[i], IPC_RMID, NULL) < 0) {
+            perror("shmctl");
+        }
+    }
+    shmdt(t_result0);
+    free(shmids);
+    printf("*** mergesort has been called %d times\n", __calico_run_count);
+    return *orig_result;
+}
+
+
 #define    swap(a, b) {                    \
         s = b;                    \
         i = size;                \
@@ -269,12 +386,16 @@ COPY:                    b = t;
     } while(bot < s);                \
 }
 
+
 /*
+
  * Optional hybrid natural/pairwise first pass.  Eats up list1 in runs of
  * increasing order, list2 in a corresponding linked list.  Checks for runs
  * when THRESHOLD/2 pairs compare with same sense.  (Only used when NATURAL
  * is defined.  Otherwise simple pairwise merging is used.)
  */
+
+
 void
 setup(list1, list2, n, size, cmp)
     size_t n, size;
@@ -290,10 +411,14 @@ setup(list1, list2, n, size, cmp)
         *EVAL(list2) = (u_char*) list2 + n*size;
         return;
     }
-    /*
+    
+/*
+
      * Avoid running pointers out of bounds; limit n to evens
      * for simplicity.
      */
+
+
     i = 4 + (n & 1);
     insertionsort(list1 + (n - i) * size, i, size, cmp);
     last = list1 + size * (n - i);
@@ -305,19 +430,31 @@ setup(list1, list2, n, size, cmp)
     sense = (cmp(f1, f1 + size) > 0);
     for (; f1 < last; sense = !sense) {
         length = 2;
-                    /* Find pairs with same sense. */
+                    
+/*
+ Find pairs with same sense. */
+
+
         for (f2 = f1 + size2; f2 < last; f2 += size2) {
             if ((cmp(f2, f2+ size) > 0) != sense)
                 break;
             length += 2;
         }
-        if (length < THRESHOLD) {        /* Pairwise merge */
+        if (length < THRESHOLD) {        
+/*
+ Pairwise merge */
+
+
             do {
                 p2 = *EVAL(p2) = f1 + size2 - list1 + list2;
                 if (sense > 0)
                     swap (f1, f1 + size);
             } while ((f1 += size2) < f2);
-        } else {                /* Natural merge */
+        } else {                
+/*
+ Natural merge */
+
+
             l2 = f2;
             for (f2 = f1 + size2; f2 < l2; f2 += size2) {
                 if ((cmp(f2-size, f2) > 0) != sense) {
@@ -336,19 +473,31 @@ setup(list1, list2, n, size, cmp)
                 p2 = *EVAL(p2) = list2 + n*size;
         }
     }
-#else        /* pairwise merge only. */
+#else        
+/*
+ pairwise merge only. */
+
+
     for (f1 = list1, p2 = list2; f1 < last; f1 += size2) {
         p2 = *EVAL(p2) = p2 + size2;
         if (cmp (f1, f1 + size) > 0)
             swap(f1, f1 + size);
     }
-#endif /* NATURAL */
+#endif 
+/*
+ NATURAL */
+
+
 }
 
+
 /*
+
  * This is to avoid out-of-bounds addresses in sorting the
  * last 4 elements.
  */
+
+
 static void
 insertionsort(a, n, size, cmp)
     u_char *a;
@@ -366,3 +515,4 @@ insertionsort(a, n, size, cmp)
             swap(u, t);
         }
 }
+

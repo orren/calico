@@ -13,8 +13,9 @@ type funKind = Pure
 type ty_str = string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind
-type state_recovery =  string * string (* name, size *)
-type annotation_set = ASet of param_annot list * out_annot * (state_recovery option)
+type state_recovery =  string * string * string (* name, size, count *)
+type eq_fun = string (* identifier for equality function *)
+type annotation_set = ASet of param_annot list * out_annot * (state_recovery option) * (eq_fun option)
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
@@ -49,11 +50,16 @@ let str_of_pannot (annot: param_annot) : string =
 
 let str_of_pair (p: annotation_set) : string =
   match p with
-    | ASet (annot, (str, _), None) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, (str, _), None, None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
-    | ASet (annot, (str, _), Some(s, ty)) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, (str, _), Some(s, size, num), None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
-      "\nSTATE recovery ptr: " ^ s ^ ", size expr: " ^ ty ^ "\n"
+      "STATE recovery ptr: " ^ s ^ ", size expr: " ^ size ^ "*" ^ num ^ "\n"
+    | ASet (annot, (str, _), Some(s, size, num), Some(eq)) -> "\nIN ANNOTATIONS: " ^
+      (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
+      "STATE recovery ptr: " ^ s ^ ", size expr: " ^ size ^ "*" ^ num ^ "\n" ^
+      "EQUALITY function: " ^ eq ^ "\n"
+    | ASet (annot, (str, _), _, _) -> failwith "Equality but no state recovery?"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with

@@ -9,7 +9,8 @@ extern void exit(int);
  * @param-info { in, "int*" } ;
  * @input-prop { SideEffect } negate(in) ;
  * @output-prop { SideEffect } negate(in) ;
- * @state-recover { in, "sizeof(int)" } ;
+ * @state-recover { in, "sizeof(int)", 1 } ;
+ * @equality-op { memcmp } ;
  */
 void double_int_ptr ( int* in ) {
   *in = *in * 2;
