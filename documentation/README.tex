@@ -1,0 +1,29 @@
+\documentclass[notitlepage]{article}
+\usepackage[margin=0.75in]{geometry}
+\author{Chris Manchester, Orren Saltzman}
+\title{CIS 573 Project: Runtime Metamorphic Testing with Calico}
+\parindent 0pt
+\parskip 10pt
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+
+Calico is a C source code rewriter to be used to perform runtime metamorphic property testing on C programs. Calico takes as input a C source file, in which one or more functions has been annotated by the user according to a specified grammar (described below). This grammar conveys the metamorphic properties the function (or functions) is intended to have. Calico's output is a C program that behaves exactly as the original, except that each time an annotated function is called, it is called again with tranformed inputs, and the result is saved. The original output is also transformed, and it is asserted by the new program that the two results are equal. If they are, nothing has been proven about the correctness of the program, but if they are not, then the metamorphic property being asserted by the user has been violated, and the function under test has been to shown to be incorrect.
+
+\section{A Brief Description of calico instrumentation}
+
+\section{The Annotation Language}
+
+\section{Known Limitations/Future Work}
+
+\section{Performance Measurement}
+
+\section{calico's implementation}
+
+\subsection{Description of the Parser}
+
+\subsection{Description of the Source Translator}
+
+\end{document}
