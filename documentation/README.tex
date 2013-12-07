@@ -21,7 +21,7 @@ Calico is a C source code rewriter to be used to perform runtime metamorphic pro
 
 \section{A Brief Description of Calico Instrumentation}
 
-Many functions, particularly C functions, use side effects to accomplish their task. Furthermore, the data that might semantically be referred to as the \"result\" of a C function is not necessarily the same as the return value of that function. As such, it is necessary to assume that any piece of memory belonging to the process of the instrumented program might be considered $f(x)$ for the purpose of these assertions. Thus, it is neccessary to sandbox the effects of the function under test each time it is called, by spawning a new process for every additional time the function is called, times the number of properties being asserted. For instance, if a function is called by the application 100 times over the course of program execution, and three properties about the function are being specified, then the instrumented program must make 400 calls to the function: The original 100, plus 100 for each specified input transformation. For each of the 300 transformed calls, a process must be spawned and the result recovered by the main process through the use of shared memory. In this way, all side effects are sandboxed, and the entire application environment is held constant save the input to the function.
+Many functions, particularly C functions, use side effects to accomplish their task. Furthermore, the data that might semantically be referred to as the ``result'' of a C function is not necessarily the same as the return value of that function. As such, it is necessary to assume that any piece of memory belonging to the process of the instrumented program might be considered $f(x)$ for the purpose of these assertions. Thus, it is neccessary to sandbox the effects of the function under test each time it is called, by spawning a new process for every additional time the function is called, times the number of properties being asserted. For instance, if a function is called by the application 100 times over the course of program execution, and three properties about the function are being specified, then the instrumented program must make 400 calls to the function: The original 100, plus 100 for each specified input transformation. For each of the 300 transformed calls, a process must be spawned and the result recovered by the main process through the use of shared memory. In this way, all side effects are sandboxed, and the entire application environment is held constant save the input to the function.
 
 The form of the instrumented application is as follows:
 
@@ -30,6 +30,10 @@ The form of the instrumented application is as follows:
 \includegraphics[width=175mm]{calico_pic2.png}
 \caption{Calls to the function f are intercepted by a new function of the same name. The original is renamed with two leading underscores.}
 \end{figure}
+
+\subsection{A short example: summing an array}
+
+TODO
 
 \section{The Annotation Language}
 
@@ -67,9 +71,24 @@ The current implementation of calico does not go so far as to parse the entire C
 
 There is a certain subset of C functions which calico may not instrument in the optimal way from a memory management standpoint. Most notably, functions which perform side effects on large regions of memory, when instrumented, will create redundant copies of those regions using calls to memcpy. Changes could be made to calico's source translator that cause it to identify situations where those memcpy calls are not strictly necessary and direct subsequent reads of the data to the original result location, rather than a copied version.
 
-Benefits of this feature in terms of space complexity would be linear with respect to the size of the inputs and outputs of the function under test. Benefits in terms of runtime complexity would be the same; however, the overhead of process spawning and deallocation
+Benefits of this feature in terms of space complexity would be linear with respect to the size of the inputs and outputs of the function under test. Benefits in terms of runtime complexity would be the same; however, the overhead of process spawning and deallocation is expected to be orders of magnitude more expensive than these calls to memcpy for the majority of applications, and so significant runtime gains should not be expected unless the input or output sizes are extremely large.
 
 \section{Performance Measurement}
+
+An experiment was run using a Machine Learning application called Martirank. Martirank contains an implementation of merge sort which takes as input the location of an array, and type and size information about the elements of that array. This function was annotated to assert the following metamorphic property: If the elements of the input array are permuted, the resulting array should be the same. Note that because the array is sorted in-place, the ``result'' as we are choosing to think about it now is not the same as the return value of the function. This issue is dealt with using the optional \ttfamily @state-recover \rmfamily annoation described earlier.
+
+Then, Martirank was run with an example dataset. Then, an instrumented version was created and run using the same dataset. The results are as follows:
+
+\begin{tabular}{l | l | l}
+& original & instrumented \\ \hline
+calls to mergesort & $11047$ & $22094$ \\
+total runtime (sec) & $.559$ & $24.403$\\
+new processes spawned & 0 & $11047$
+\end{tabular}
+
+Our resultant estimation of added runtime per assertion is $\frac{24.403}{11047} = {\mathbf .0022}$ seconds.
+
+Note that the original runtime was not subracted from the total, since the experiment was run on a multi-core machine that parallelized the new calls with the old. Thus, the new calls are assumed to represent the main runtime bottleneck of the program.
 
 \section{Calico's Implementation}
 
