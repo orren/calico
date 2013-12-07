@@ -4,13 +4,13 @@
 /**
  * Sums the elements of an array?
  *
- * @fun-info { sum, Pure, "int" } ;
+ * @fun-info { sum, ArithmeticReturn, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id ;
- * @output-prop { Pure } multiply_int(result, 2) ;
- * @input-prop { SideEffect } permute_int(arr, length), { Pure } id ;
- * @output-prop { Pure } result ;
+ * @input-prop { VoidReturn } multiply_int_array(arr, 2, length), { ArithmeticReturn } id ;
+ * @output-prop { ArithmeticReturn } multiply_int(result, 2) ;
+ * @input-prop { VoidReturn } permute_int(arr, length), { ArithmeticReturn } id ;
+ * @output-prop { ArithmeticReturn } result ;
  */
 int sum(int *arr, int length) {
   int i, sum = 0;
@@ -23,10 +23,10 @@ int sum(int *arr, int length) {
 /**
  * Returns a pointer to a double that is the absolute value of a?
  *
- * @fun-info { absolute, PointReturn, "double *" } ;
+ * @fun-info { absolute, PointerReturn, "double *" } ;
  * @param-info { a, "double"} ;
- * @input-prop { Pure } multiply_double(a, -1) ;
- * @output-prop { Pure } result ;
+ * @input-prop { ArithmeticReturn } multiply_double(a, -1) ;
+ * @output-prop { ArithmeticReturn } result ;
  */
 double *absolute(double a) {
   double *answer = malloc(sizeof(double));

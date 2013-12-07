@@ -101,13 +101,13 @@ static void insertionsort(u_char *, size_t, size_t,
 /**
  * Annotation comment
  *
- * @fun-info { mergesort, Pure, "int" } ;
+ * @fun-info { mergesort, ArithmeticReturn, "int" } ;
  * @param-info { base, "void*" } ;
  * @param-info { nmemb, "size_t" } ;
  * @param-info { size, "size_t" } ;
  * @param-info { cmp, "" } ;
- * @input-prop { SideEffect } permute(base, nmemb, size), { Pure } id, { Pure } id, { Pure } id ;
- * @output-prop { Pure } id ;
+ * @input-prop { VoidReturn } permute(base, nmemb, size), { ArithmeticReturn } id, { ArithmeticReturn } id, { ArithmeticReturn } id ;
+ * @output-prop { ArithmeticReturn } id ;
  * @state-recover { base, "size", "nmemb" } ;
  * @equality-op { cmp } ;
  */

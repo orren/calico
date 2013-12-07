@@ -26,10 +26,10 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
   let all_names = (map get_p_name params) in
   "// < call_inner_function\n        " ^
     begin match kind with
-      | Pure        -> (if not recover then "*t_result" ^ index ^ " = " else "") ^ "__" ^ name ^
+      | ArithmeticReturn        -> (if not recover then "*t_result" ^ index ^ " = " else "") ^ "__" ^ name ^
                        "(" ^ String.concat ", " all_names ^ ")"
-      | SideEffect  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
-      | PointReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
+      | VoidReturn  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
+      | PointerReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
         String.concat ", " all_names ^
         ");\n        memcpy(t_result" ^ index ^ ", temp_t_result, result_sizes[" ^ index ^ "])"
     end
@@ -42,10 +42,10 @@ let output_transformation (procNum : int) (return_type : string)
   (* TODO: The following is not compatible with state recovery assertions *)
   begin match prop with
     | ("id", _)                -> ""
-    | (prop_name, Pure)        -> "*g_result" ^ index ^ " = " ^
+    | (prop_name, ArithmeticReturn)        -> "*g_result" ^ index ^ " = " ^
         Str.global_replace (Str.regexp "result") "*orig_result" prop_name
-    | (prop_name, SideEffect)  -> prop_name
-    | (prop_name, PointReturn) -> return_type ^ " *temp_g_result = " ^
+    | (prop_name, VoidReturn)  -> prop_name
+    | (prop_name, PointerReturn) -> return_type ^ " *temp_g_result = " ^
         Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
       ";\n    memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
   end
@@ -57,12 +57,12 @@ let input_transformation (param : param_info) (prop : param_annot) : string =
       let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
       "// < input_transformation\n        " ^
         begin match kind with
-          | Pure
-          | PointReturn -> if String.compare param_name name = 0 ||
+          | ArithmeticReturn
+          | PointerReturn -> if String.compare param_name name = 0 ||
                               String.compare name "id" = 0
                            then ""
                            else param_name ^ " = " ^ prop_expr
-          | SideEffect  -> prop_expr
+          | VoidReturn  -> prop_expr
         end
       ^ ";\n// input_transformation >"
   end
@@ -163,12 +163,12 @@ let initialize_tg_results (default : string) (set : annotation_set) (procNum : i
 
 let call_original (k: funKind) (ty: string) (call_to_inner: string) : string =
   begin match k with
-    | Pure        -> "*orig_result = __" ^ call_to_inner
-    | PointReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));\n    " ^
+    | ArithmeticReturn        -> "*orig_result = __" ^ call_to_inner
+    | PointerReturn -> ty ^ "temp_orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));\n    " ^
       "temp_orig_result = __" ^ call_to_inner ^
       ";\n        memcpy(orig_result, temp_orig_result, sizeof(" ^
       (unstar ty) ^ "))"
-    | SideEffect  -> (if ty = "void" then "" else "orig_result = ") ^ "__" ^ call_to_inner
+    | VoidReturn  -> "__" ^ call_to_inner
   end
 
 let instrument_function (f : program_element) : string =
@@ -193,7 +193,9 @@ let instrument_function (f : program_element) : string =
         "    int i;\n" ^
 
         (* TODO: how to initialize for a pure struct return type? *)
-        (if ty = "void" then "" else "    " ^ (unstar ty) ^
+        (match k with
+          | VoidReturn -> ""
+          | _          -> "    " ^ (unstar ty) ^
             " *orig_result = malloc(sizeof(" ^ (unstar ty) ^ "));") ^
         "\n    " ^ String.concat "\n    "
         (map2 (initialize_tg_results (unstar ty)) asets child_indexes) ^
@@ -234,8 +236,11 @@ let instrument_function (f : program_element) : string =
       String.concat "\n" (map (fun i -> "    shmdt(t_result" ^ (string_of_int i) ^ ");")
                             child_indexes) ^ "\n" ^
         "    free(shmids);\n" ^
-        "    return " ^ (if String.compare ty "void" = 0 then "" else
-                        (if k == Pure then "*" else "") ^ "orig_result") ^
+        "    return " ^ 
+        (match k with
+          | VoidReturn       -> ""
+          | ArithmeticReturn -> "*orig_result"
+          | PointerReturn    -> "orig_result") ^
         ";\n" ^ "}"
   end
 

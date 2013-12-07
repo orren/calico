@@ -1,5 +1,6 @@
 #include <calico.c>
 
+// TODO: Eliminate this file?
 /*
  * sum(\multiply(A, 2, length), length) == \result * 2
  * sum(\permute(A), length) == \result

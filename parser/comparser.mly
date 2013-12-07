@@ -2,7 +2,6 @@
 open Ast;;
 %}
 
-/* Declare your tokens here. */
 
 /* ocamlyacc uses this declaration to automatically generate
  * a token datatype.
@@ -33,7 +32,6 @@ open Ast;;
 %token <Range.t * Ast.funKind> KIND    /* function kind */
 
 /* ---------------------------------------------------------------------- */
-
 /* Mark 'toplevel' as a starting nonterminal of the grammar */
 %start toplevel
 

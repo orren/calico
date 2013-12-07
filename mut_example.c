@@ -5,10 +5,10 @@ extern void exit(int);
 /**
  * May sum the elements of an array
  *
- * @fun-info { double_int_ptr, SideEffect, "void" } ;
+ * @fun-info { double_int_ptr, VoidReturn, "void" } ;
  * @param-info { in, "int*" } ;
- * @input-prop { SideEffect } negate(in) ;
- * @output-prop { SideEffect } negate(in) ;
+ * @input-prop { VoidReturn } negate(in) ;
+ * @output-prop { VoidReturn } negate(in) ;
  * @state-recover { in, "sizeof(int)", 1 } ;
  * @equality-op { memcmp } ;
  */

@@ -7,9 +7,9 @@
 
 (* Annotated C functions in context *)
 
-type funKind = Pure
-               | SideEffect
-               | PointReturn
+type funKind = ArithmeticReturn
+               | VoidReturn
+               | PointerReturn
 type ty_str = string
 type param_annot = string * funKind * string list (* name, kind, transformation list *)
 type out_annot = string * funKind
@@ -39,9 +39,9 @@ let name_of_out_annot (p: out_annot) : string =
 
 let str_of_kind (k: funKind) : string =
   match k with
-    | PointReturn -> "PointReturn"
-    | Pure -> "Pure"
-    | SideEffect -> "SideEffect"
+    | PointerReturn -> "PointerReturn"
+    | ArithmeticReturn -> "ArithmeticReturn"
+    | VoidReturn -> "VoidReturn"
 
 let str_of_pannot (annot: param_annot) : string =
   match annot with

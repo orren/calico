@@ -8,12 +8,12 @@
   let find_kwd (buf: lexbuf) =
     let lex_res = lexeme buf in
     let lex_rng = lex_range buf in
-    if (compare lex_res "PointReturn") = 0
-    then KIND (lex_rng, PointReturn)
-    else if (compare lex_res "Pure") = 0
-    then KIND (lex_rng, Pure)
-    else if (compare lex_res "SideEffect") = 0
-    then KIND (lex_rng, SideEffect)
+    if (compare lex_res "PointerReturn") = 0
+    then KIND (lex_rng, PointerReturn)
+    else if (compare lex_res "ArithmeticReturn") = 0
+    then KIND (lex_rng, ArithmeticReturn)
+    else if (compare lex_res "VoidReturn") = 0
+    then KIND (lex_rng, VoidReturn)
     else if (compare lex_res "id") = 0
     then KWRD (lex_rng, "id")
     else IDENT (lex_rng, lex_res)
@@ -50,10 +50,9 @@ let state_rec = (['*']? whitespace* state_kwrd) | state_kwrd
 let eq_kwrd = ['@'] whitespace* "equality-op"
 let eq_fun = (['*']? whitespace* eq_kwrd) | eq_kwrd
 
-(* Other characters we care about... *)
+(* Other characters we care about, (excluding '@') *)
 let com_char = ['*' '%' '/' ':' '`' '-' '?' '\\' '!' '\'' '#' '<' '>' '.' 'a'-'z' 'A'-'Z' '0'-'9']
 let com_line = linewhitespace* com_char+ (linewhitespace|com_char)* nl
-let kind_str = "PointReturn" | "Pure" | "SideEffect"
 
 (* Returns a token of type as specified in parser.mly
 
