@@ -31,10 +31,6 @@ The form of the instrumented application is as follows:
 \caption{Calls to the function f are intercepted by a new function of the same name. The original is renamed with two leading underscores.}
 \end{figure}
 
-\subsection{A short example: summing an array}
-
-TODO
-
 \section{The Annotation Language}
 
 Annotations are placed in the comment text of a C function (above a function, between a /** and a */). Their form is as follows ({\bf ?} means 0 or 1 times, {\bf +} means 1 or more times, {\bf *} means 0 or more times{\bf}):
@@ -57,6 +53,163 @@ Annotations are placed in the comment text of a C function (above a function, be
 
 \rmfamily
 
+\section{A short example: summing an array}
+
+the following short file, called sum\_example.c, contains a function, sum, and a stub main function which simply calls sum on a toy array and prints the result:
+
+\begin{verbatim}
+#include <stdio.h>
+
+extern void exit(int);
+
+/**
+ * May sum the elements of an array
+ *
+ * @fun-info { sum, Pure, "int" } ;
+ * @param-info { arr, "int*" } ;
+ * @param-info { length, "int" } ;
+ * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id ;
+ * @output-prop { Pure } double_int(result) ;
+ * @input-prop { PointReturn } duplicate(arr, length), { Pure } double_int(length) ;
+ * @output-prop { Pure } double_int(result) ;
+ */
+int sum ( int arr [], int length ) {
+  int i = 0, r = 0;
+  for (; i < length;) r += arr[i++];
+  return r;
+}
+
+int main () {
+  int arr [] = {1, 2, 3};
+  int x = sum(arr, 3);
+  printf("*** The sum is : %d\n", x);
+  exit(0);
+}
+\end{verbatim}
+
+the sum function has been annotated to assert two of its metamorphic properties. The first is that if you double each element of the input array, that the result will double. The second is that if you duplicate the array and use as input a new one which contains two copies of the original back to back, that the result will be doubled.
+
+This source file is then instrumented by calcio, resulting in the following file, called calico\_gen\_sum\_example.c:
+
+\begin{verbatim}
+#include "calico_prop_library.h"
+#include <stdio.h>
+
+extern void exit(int);
+
+
+/**
+ * May sum the elements of an array
+ *
+ * @fun-info { sum, Pure, "int" } ;
+ * @param-info { arr, "int*" } ;
+ * @param-info { length, "int" } ;
+ * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id ;
+ * @output-prop { Pure } double_int(result) ;
+ * @input-prop { PointReturn } duplicate(arr, length), { Pure } double_int(length) ;
+ * @output-prop { Pure } double_int(result) ;
+ */
+
+int __sum( int arr [], int length ) {
+  int i = 0, r = 0;
+  for (; i < length;) r += arr[i++];
+  return r;
+}
+
+int sum( int arr [], int length )  {
+    int numProps = 2;
+    size_t result_sizes[numProps];
+    int* shmids = malloc(numProps * sizeof(int));
+    int procNum = -1;
+    int i;
+    int *orig_result = malloc(sizeof(int));
+    result_sizes[0] = sizeof(int);
+    int* t_result0 = NULL;
+    int* g_result0 = malloc(result_sizes[0]);
+
+    result_sizes[1] = sizeof(int);
+    int* t_result1 = NULL;
+    int* g_result1 = malloc(result_sizes[1]);
+
+    for (i = 0; i < numProps; i += 1) {
+        if (procNum == -1) {
+            if ((shmids[i] = shmget(key++, result_sizes[i], IPC_CREAT | 0666)) < 0) {
+                perror("shmget");
+                exit(1);
+            }
+            if (0 == fork()) {
+                procNum = i;
+                break;
+            }
+        }
+    }
+
+    if (procNum == -1) {
+        *orig_result = __sum(arr, length);
+        for (i = 0; i < numProps; i += 1) {
+            wait(NULL);
+        }
+    }
+
+    if (procNum == 0) {
+        t_result0 = shmat(shmids[0], NULL, 0);
+// < input_transformation
+        multiply_int_array(arr, 2, length);
+// input_transformation >;
+        // < input_transformation
+        ;
+// input_transformation >// < call_inner_function
+        *t_result0 = __sum(arr, length);
+// call_inner_function >
+        shmdt(t_result0);
+        exit(0);
+    }
+
+    if (procNum == 1) {
+        t_result1 = shmat(shmids[1], NULL, 0);
+// < input_transformation
+        arr = duplicate(arr, length);
+// input_transformation >;
+// < input_transformation
+        length = double_int(length);
+// input_transformation >// < call_inner_function
+        *t_result1 = __sum(arr, length);
+// call_inner_function >
+        shmdt(t_result1);
+        exit(0);
+    }
+
+    t_result0 = shmat(shmids[0], NULL, 0);
+// < output_transformation
+    *g_result0 = double_int(*orig_result);
+// output_transformation >
+    if (memcmp(g_result0, t_result0, sizeof(int))) {
+        printf("a property has been violated:\ninput_prop: multiply_int_array, id\noutput_prop: double_int(result)\n");
+
+    }
+
+    t_result1 = shmat(shmids[1], NULL, 0);
+// < output_transformation
+    *g_result1 = double_int(*orig_result);
+// output_transformation >
+    if (memcmp(g_result1, t_result1, sizeof(int))) {
+        printf("a property has been violated:\ninput_prop: duplicate, double_int\noutput_prop: double_int(result)\n");
+
+    }
+
+    free(shmids);
+    return *orig_result;
+}
+
+
+int main () {
+  int arr [] = {1, 2, 3};
+  int x = sum(arr, 3);
+  printf("*** The sum is : %d\n", x);
+  exit(0);
+}
+\end{verbatim}
+
 \section{Known Limitations/Future Work}
 
 \subsection{probabalistic testing}
@@ -75,22 +228,26 @@ Benefits of this feature in terms of space complexity would be linear with respe
 
 \section{Performance Measurement}
 
-An experiment was run using a Machine Learning application called Martirank. Martirank contains an implementation of merge sort which takes as input the location of an array, and type and size information about the elements of that array. This function was annotated to assert the following metamorphic property: If the elements of the input array are permuted, the resulting array should be the same. Note that because the array is sorted in-place, the ``result'' as we are choosing to think about it now is not the same as the return value of the function. This issue is dealt with using the optional \ttfamily @state-recover \rmfamily annoation described earlier.
+An experiment was run using a Machine Learning application called Martirank. Martirank contains an implementation of merge sort which takes as input the location of an array, and type and size information about the elements of that array. It then sorts the array in place.
 
-Then, Martirank was run with an example dataset. Then, an instrumented version was created and run using the same dataset. The results are as follows:
+This function was annotated to assert the following metamorphic property: If the elements of the input array are permuted, the resulting array should be the same. Note that because the array is sorted in-place, the ``result'' as we are choosing to think about it now is not the same as the return value of the function. This issue is dealt with using the optional \ttfamily @state-recover \rmfamily annotion described earlier.
+
+Then, Martirank was run and timed with an example dataset. Then, an instrumented version was created and timed using the same dataset. The results are as follows:
 
 \begin{tabular}{l | l | l}
 & original & instrumented \\ \hline
 calls to mergesort & $11047$ & $22094$ \\
-total runtime (sec) & $.559$ & $24.403$\\
+total runtime (sec) & $.559$ & $24.403$ \\
 new processes spawned & 0 & $11047$
 \end{tabular}
 
-Our resultant estimation of added runtime per assertion is $\frac{24.403}{11047} = {\mathbf .0022}$ seconds.
+Our resultant rough estimation of added runtime per assertion is $\frac{24.403}{11047} = {\mathbf .0022}$ seconds.
 
 Note that the original runtime was not subracted from the total, since the experiment was run on a multi-core machine that parallelized the new calls with the old. Thus, the new calls are assumed to represent the main runtime bottleneck of the program.
 
 \section{Calico's Implementation}
+
+Calico is implemented in OCaml, a functional language well-suited to the task of source code rewriting. It consists of two main modules, calico/parser, which handles the C source inputs and parser them into the necessary data structure, and calcio/writer, the source code translator which takes that data structure and writes a new C source file.
 
 \subsection{Description of the Parser}
 
