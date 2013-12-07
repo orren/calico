@@ -59,6 +59,16 @@ Annotations are placed in the comment text of a C function (above a function, be
 
 Instrumenting an application causes its runtime to increase, mostly due to the overhead of spawning new processes (The specific runtime costs associated with instrumentation are described in the next section). One feature that would allow the user to mitigate this problem would be to optionally accept a probability parameter through the annotation language. This probability, set to 1 by default, would determine the likelihood of a test being run each time a function under test is called by the application. In this way, the probability parameter can be fine-tuned such that performance comes back within whatever range is considered acceptable to the user. Because of the element of randomness in such a feature, a situation where certain kinds of inputs from the application are under-represented during testing would be unlikely, even though fewer total tests are being run.
 
+\subsection{more sophisticated parsing methods}
+
+The current implementation of calico does not go so far as to parse the entire C language. Instead, it parses the annotation language, and infers what it needs in terms of C source code from the location and content of the annotations. Future work on this project may include an attempt at a deeper parsing of the C grammar. This could potentially result in a somewhat simplified annotation language in which less information is required from the user.
+
+\subsection{optimizations in memory management}
+
+There is a certain subset of C functions which calico may not instrument in the optimal way from a memory management standpoint. Most notably, functions which perform side effects on large regions of memory, when instrumented, will create redundant copies of those regions using calls to memcpy. Changes could be made to calico's source translator that cause it to identify situations where those memcpy calls are not strictly necessary and direct subsequent reads of the data to the original result location, rather than a copied version.
+
+Benefits of this feature in terms of space complexity would be linear with respect to the size of the inputs and outputs of the function under test. Benefits in terms of runtime complexity would be the same; however, the overhead of process spawning and deallocation
+
 \section{Performance Measurement}
 
 \section{Calico's Implementation}
