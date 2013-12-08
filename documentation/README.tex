@@ -33,23 +33,42 @@ The form of the instrumented application is as follows:
 
 \section{The Annotation Language}
 
-Annotations are written as C comments directly preceding the function under test. In the following grammar, ({\bf ?} means 0 or 1 occurences, {\bf +} means 1 or more occurences, {\bf *} means 0 or more{\bf}):
+Annotations are written in C comments directly preceding the function under test. In the following grammar, non-terminals are enclosed by angle braces. All other symbols compose terminals in the grammar. The non-terminal ``string-literal'' corresponds to any sequence of characters enclosed by quotations, while the non-terminal ``C-identifier'' corresponds to identifiers specified by the C language.
 
 \ttfamily
 
-<annotated-comment> ::= <unannotated-comment-text>{\bf ?} \\
-\phantom{1}\hspace{120pt}<function-info-annotation> \\
-\phantom{1}\hspace{120pt}<param-info-annotation>{\bf *} \\
-\phantom{1}\hspace{120pt}<assertion-pair>{\bf +} \\
+<annotated-comment> ::= <function-info-annotation> <param-annotations> <property-sets> \\
 
-<function-info-annotation> ::= @fun-info { <function-name>, <function-kind>, <return-type> } ;
+<function-info-annotation> ::= @fun-info \{ <function-name>, <type> \} ; \\
 
-<function-kind> ::= ArithmeticReturn | PointerReturn | VoidReturn
+<param-annotations> ::= <param-annotation> \\
+\phantom{1}\hspace{105pt}| <param-annotation> <param-annotations> \\
 
-<param-info-annotation> ::= @param-info { <C-identifier>, <param-type> } ;
+<param-annotation> ::= @param-info \{ <C-identifier>, <type> \} ; \\
 
-<annotation-pair> ::= @input-prop <t-function>{\bf *} ; \\
-\phantom{1}\hspace{110pt}@output-prop <g-function> ;
+<property-sets> ::= <property-set> \\
+\phantom{1}\hspace{85pt}| <property-set> <property-sets> \\
+
+<property-set> ::= <input-property> <output-property> \\
+\phantom{1}\hspace{82pt}| <input-property> <output-property> <state-recovery> \\
+\phantom{1}\hspace{82pt}| <input-property> <output-property> <state-recovery> <equality> \\
+
+<input-property> ::= @input-prop \{ <property-list> \} ; \\
+
+<property-list> ::= <property-elem> \\
+\phantom{1}\hspace{85pt}| <property-elem>, <property-list> \\
+
+<output-property> ::= @output-prop \{ <property-elem> \} ; \\
+
+<state-recovery> ::= @state-recover \{ <property-elem>, <property-elem>, <property-elem> \} ;
+
+<state-recovery> ::= @equality-op \{ <property-elem> \} ;
+
+<property-elem> ::= <C-identifier> \\
+\phantom{1}\hspace{85pt}| <string-literal> \\
+
+<type> ::= <string-literal>
+
 
 \rmfamily
 
