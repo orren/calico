@@ -35,22 +35,22 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
     end
   ^ ";\n// call_inner_function >\n"
 
-let output_transformation (procNum : int) (return_type : string)
-                          (prop : out_annot) : string =
+let output_transformation (procNum: int) (return_type: string)
+                          (prop: out_annot) (is_recovery: bool) : string =
   let index = string_of_int procNum in
   "// < output_transformation\n    " ^
-    (if prop = "id"
-     then "g_result" ^ index ^ " = orig_result;\n"
-     else if return_type = "void"
-     then "    " ^ prop ^ ";\n"
-     else
-       return_type ^ "* temp_g_result" ^ index ^ " = " ^
-         "malloc(" ^ "result_sizes[" ^ index ^ "]);\n" ^
-         "    *temp_g_result" ^ index ^ " = " ^
-         Str.global_replace (Str.regexp "result") "*orig_result" prop ^
-         ";\n    memcpy(g_result" ^ index ^ ", temp_g_result" ^ index ^
-         ", result_sizes[" ^ index ^ "])")
-  ^ ";\n// output_transformation >\n"
+    begin match (prop, return_type, is_recovery) with
+      | (_, "void", _)
+      | ("id", _, true)  -> ";\n"
+      | ("id", _, false) -> "memcpy(g_result" ^ index ^ ", orig_result, result_sizes[" ^ index ^ "]);\n"
+      |  _              -> return_type ^ "* temp_g_result" ^ index ^ " = " ^
+        "malloc(" ^ "result_sizes[" ^ index ^ "]);\n" ^
+        "    *temp_g_result" ^ index ^ " = " ^
+        Str.global_replace (Str.regexp "result") "*orig_result" prop ^
+        ";\n    memcpy(g_result" ^ index ^ ", temp_g_result" ^ index ^
+        ", result_sizes[" ^ index ^ "]);"
+    end
+  ^ "\n    // output_transformation >\n"
 
 let input_transformation (param : param_info) (prop : param_annot) : string =
   "// < input_transformation\n        " ^
@@ -114,14 +114,14 @@ let property_assertion (return_type : string) (fun_kind : funKind)
   let index = string_of_int procNum in
   begin match prop with
     | ASet(param_props, out_prop, recover, eq) ->
-      let (elem_size, eqfun, count) = match (recover, eq) with
-        | (None, _) -> ("sizeof(" ^ return_type ^ ")", "memcmp", "1")
-        | (Some(_, expr, count), None) -> (expr, "memcmp", count)
-        | (Some(_, expr, count), Some(eq)) -> (expr, eq, count)
+      let (elem_size, eqfun, count, is_recovery) = match (recover, eq) with
+        | (None, _) -> ("sizeof(" ^ return_type ^ ")", "memcmp", "1", false)
+        | (Some(_, expr, count), None) -> (expr, "memcmp", count, true)
+        | (Some(_, expr, count), Some(eq)) -> (expr, eq, count, true)
       in
 
       "    t_result" ^ index ^ " = shmat(shmids[" ^ index ^ "], NULL, 0);\n    " ^
-        output_transformation procNum return_type out_prop ^
+        output_transformation procNum return_type out_prop is_recovery ^
 
       begin match recover with
         | None                 -> ""
