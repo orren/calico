@@ -30,8 +30,8 @@ let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: strin
                        "(" ^ String.concat ", " all_names ^ ")"
       | VoidReturn  -> "__" ^ name ^ "(" ^ String.concat ", " all_names ^ ")"
       | PointerReturn -> ty ^ " temp_t_result = __" ^ name ^ "(" ^
-        String.concat ", " all_names ^
-        ");\n        memcpy(t_result" ^ index ^ ", temp_t_result, result_sizes[" ^ index ^ "])"
+        String.concat ", " all_names ^ ");\n        memcpy(t_result" ^ index ^
+        ", temp_t_result, result_sizes[" ^ index ^ "])"
     end
   ^ ";\n// call_inner_function >\n"
 
@@ -40,10 +40,11 @@ let output_transformation (procNum: int) (return_type: string)
   let index = string_of_int procNum in
   "// < output_transformation\n    " ^
     begin match (prop, return_type, is_recovery) with
-      | (_, "void", _)
+      | (_, "void", _)   -> "    " ^ prop ^ ";\n"
       | ("id", _, true)  -> ";\n"
-      | ("id", _, false) -> "memcpy(g_result" ^ index ^ ", orig_result, result_sizes[" ^ index ^ "]);\n"
-      |  _              -> return_type ^ "* temp_g_result" ^ index ^ " = " ^
+      | ("id", _, false) -> "memcpy(g_result" ^ index ^
+        ", orig_result, result_sizes[" ^ index ^ "]);\n"
+      |  _               -> return_type ^ "* temp_g_result" ^ index ^ " = " ^
         "malloc(" ^ "result_sizes[" ^ index ^ "]);\n" ^
         "    *temp_g_result" ^ index ^ " = " ^
         Str.global_replace (Str.regexp "result") "*orig_result" prop ^
