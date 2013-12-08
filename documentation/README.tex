@@ -33,7 +33,7 @@ The form of the instrumented application is as follows:
 
 \section{The Annotation Language}
 
-Annotations are placed in the comment text of a C function (above a function, between a /** and a */). Their form is as follows ({\bf ?} means 0 or 1 times, {\bf +} means 1 or more times, {\bf *} means 0 or more times{\bf}):
+Annotations are placed in the comment text of a C function (above a function, between a /* and a */). Their form is as follows ({\bf ?} means 0 or 1 times, {\bf +} means 1 or more times, {\bf *} means 0 or more times{\bf}):
 
 \ttfamily
 
@@ -65,13 +65,13 @@ extern void exit(int);
 /**
  * May sum the elements of an array
  *
- * @fun-info { sum, Pure, "int" } ;
+ * @fun-info { sum, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id ;
- * @output-prop { Pure } double_int(result) ;
- * @input-prop { PointReturn } duplicate(arr, length), { Pure } double_int(length) ;
- * @output-prop { Pure } double_int(result) ;
+ * @input-prop { multiply_int_array(arr, 2, length), id } ;
+ * @output-prop { double_int(result) } ;
+ * @input-prop { duplicate(arr, length), double_int(length) } ;
+ * @output-prop { double_int(result) } ;
  */
 int sum ( int arr [], int length ) {
   int i = 0, r = 0;
@@ -101,13 +101,13 @@ extern void exit(int);
 /**
  * May sum the elements of an array
  *
- * @fun-info { sum, Pure, "int" } ;
+ * @fun-info { sum, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { SideEffect } multiply_int_array(arr, 2, length), { Pure } id ;
- * @output-prop { Pure } double_int(result) ;
- * @input-prop { PointReturn } duplicate(arr, length), { Pure } double_int(length) ;
- * @output-prop { Pure } double_int(result) ;
+ * @input-prop { multiply_int_array(arr, 2, length), id } ;
+ * @output-prop { double_int(result) } ;
+ * @input-prop { duplicate(arr, length), double_int(length) } ;
+ * @output-prop { double_int(result) } ;
  */
 
 int __sum( int arr [], int length ) {
