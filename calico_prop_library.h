@@ -54,21 +54,23 @@ int* duplicate(int *a, int length) {
   return res;
 }
 
-void multiply_int_array(int *a, int factor, int length) {
+int* multiply_int_array(int *a, int factor, int length) {
   int i;
   for (i = 0; i < length; i++) a[i] *= factor;
+  return a;
 }
 
 double multiply_double(double a, double factor) {
   return a * factor;
 }
 
-void multiply_double_array(double* a, double factor, double length) {
+double* multiply_double_array(double* a, double factor, double length) {
   int i;
   for (i = 0; i < length; i++) a[i] *= factor;
+  return a;
 }
 
-void permute_int(int A[], int length) {
+int* permute_int(int A[], int length) {
   srand(time(NULL));
   int i;
   for (i = 0; i < length; i++) {
@@ -77,9 +79,10 @@ void permute_int(int A[], int length) {
     A[i] = A[which];
     A[which] = temp;
   }
+  return A;
 }
 
-void permute(void* base, size_t nmemb, size_t size) {
+void* permute(void* base, size_t nmemb, size_t size) {
   srand(time(NULL));
   int i;
 
@@ -91,6 +94,8 @@ void permute(void* base, size_t nmemb, size_t size) {
     memcpy((base + (which * size)), (base + (i * size)), size);
     memcpy((base + (i * size)), temp, size);
   }
+
+  return base;
 }
 
 #endif

@@ -7,19 +7,28 @@
 
 (* Annotated C functions in context *)
 
+(* Writer facing interface to annotated comments *)
 type funKind = ArithmeticReturn
                | VoidReturn
                | PointerReturn
 type ty_str = string
-type param_annot = string * funKind * string list (* name, kind, transformation list *)
-type out_annot = string * funKind
-type state_recovery =  string * string * string (* name, size, count *)
+type param_annot = string * string list (* name, kind, transformation list *)
+type out_annot = string
+type state_recovery = string * string * string (* name, size, count *)
 type eq_fun = string (* identifier for equality function *)
-type annotation_set = ASet of param_annot list * out_annot * (state_recovery option) * (eq_fun option)
+type annotation_set = ASet of
+    param_annot list * out_annot * (state_recovery option) * (eq_fun option)
 type param_info = string * ty_str (* name, type *)
 type fun_info = string * funKind * ty_str (* name, kind, type *)
 type annotated_comment = AComm of
     fun_info * (param_info list) * (annotation_set list)
+
+(* Raw annotation information from parser. These have no mention of funkinds *)
+type raw_fun_info = string * ty_str (* name, kind, type *)
+type raw_annotated_comment = RAComm of
+    raw_fun_info * (param_info list) * (annotation_set list)
+
+(* Othe top level program elements *)
 type function_body = string
 type function_header = string
 type program_element = SrcStr of string
@@ -29,11 +38,8 @@ type program_element = SrcStr of string
 type sourceUnderTest = { file_name: string;
                          elements: program_element list }
 
+(* String representations of structures for debugging. *)
 let name_of_param_annot (p: param_annot) : string =
-  match p with
-    | (name, _, _) -> name
-
-let name_of_out_annot (p: out_annot) : string =
   match p with
     | (name, _) -> name
 
@@ -45,21 +51,21 @@ let str_of_kind (k: funKind) : string =
 
 let str_of_pannot (annot: param_annot) : string =
   match annot with
-    | (name, kind, lst) -> "CALL TO:  " ^ name ^ ", KIND:  " ^
-      (str_of_kind kind) ^ "\n ARGS:  " ^ (String.concat ", " lst) ^ " "
+    | (name, lst) -> "CALL TO:  " ^ name ^ ", KIND:  " ^
+      "\n ARGS:  " ^ (String.concat ", " lst) ^ " "
 
 let str_of_pair (p: annotation_set) : string =
   match p with
-    | ASet (annot, (str, _), None, None) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, str, None, None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n"
-    | ASet (annot, (str, _), Some(s, size, num), None) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, str, Some(s, size, num), None) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
       "STATE recovery ptr: " ^ s ^ ", size expr: " ^ size ^ "*" ^ num ^ "\n"
-    | ASet (annot, (str, _), Some(s, size, num), Some(eq)) -> "\nIN ANNOTATIONS: " ^
+    | ASet (annot, str, Some(s, size, num), Some(eq)) -> "\nIN ANNOTATIONS: " ^
       (String.concat "\n" (List.map str_of_pannot annot)) ^ "\nOUT ANNOTATION: " ^ str ^ "\n" ^
       "STATE recovery ptr: " ^ s ^ ", size expr: " ^ size ^ "*" ^ num ^ "\n" ^
       "EQUALITY function: " ^ eq ^ "\n"
-    | ASet (annot, (str, _), _, _) -> failwith "Equality but no state recovery?"
+    | ASet (annot, str, _, _) -> failwith "Equality but no state recovery?"
 
 let str_of_funinfo (funinfo: fun_info) : string =
   match funinfo with

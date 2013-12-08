@@ -34,5 +34,5 @@ build: build_lex build_yacc
 
 run: build
 	./pmain sum_example.c
-	./pmain mut_example.c
+#	./pmain mut_example.c
 

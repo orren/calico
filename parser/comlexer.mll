@@ -8,13 +8,7 @@
   let find_kwd (buf: lexbuf) =
     let lex_res = lexeme buf in
     let lex_rng = lex_range buf in
-    if (compare lex_res "PointerReturn") = 0
-    then KIND (lex_rng, PointerReturn)
-    else if (compare lex_res "ArithmeticReturn") = 0
-    then KIND (lex_rng, ArithmeticReturn)
-    else if (compare lex_res "VoidReturn") = 0
-    then KIND (lex_rng, VoidReturn)
-    else if (compare lex_res "id") = 0
+    if (compare lex_res "id") = 0
     then KWRD (lex_rng, "id")
     else IDENT (lex_rng, lex_res)
 }

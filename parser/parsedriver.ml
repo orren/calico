@@ -26,6 +26,22 @@ let is_annot (com: string) : bool =
   with
       Not_found -> (* Printf.printf "Not an annotation : %s\n" com; *) false
 
+let funkind_of_tystr (s: string) : funKind =
+  if s = "void"
+  then VoidReturn
+  else if String.contains s '*'
+  then PointerReturn
+  else ArithmeticReturn
+
+let fun_info_of_raw (rinfo: raw_fun_info) : fun_info =
+  match rinfo with
+    | (name, ty) -> (name, funkind_of_tystr ty, ty)
+
+let acomm_of_raw_accom (racomm: raw_annotated_comment) : annotated_comment =
+  match racomm with
+    | RAComm (raw_fun_info, param_info, annotations) ->
+      AComm (fun_info_of_raw raw_fun_info, param_info, annotations)
+
 (* Invokes the appropriate parser for each program element. Generates
  * an annotation/function pairs when possible.
  *)
@@ -46,7 +62,7 @@ let parse_of_program (pelems: program_element list) : program_element list =
       (* (Printf.printf "com_str: %s\n" com_str); *)
       (* (Printf.printf "src_str: %s\n" src_str); *)
       let (acomm: annotated_comment) =
-        Comparser.toplevel Comlexer.token com_buf in
+        acomm_of_raw_accom (Comparser.toplevel Comlexer.token com_buf) in
       (* (Printf.printf "Parsed comment: %s" (str_of_annot acomm)); *)
       let srcsplit = split_src acomm src_str in
       let (header, funbody, src_rest) = (Srclexer.funparse (from_string srcsplit)) in

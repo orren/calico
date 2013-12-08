@@ -4,13 +4,13 @@
 /**
  * Sums the elements of an array?
  *
- * @fun-info { sum, ArithmeticReturn, "int" } ;
+ * @fun-info { sum, "int" } ;
  * @param-info { arr, "int*" } ;
  * @param-info { length, "int" } ;
- * @input-prop { VoidReturn } multiply_int_array(arr, 2, length), { ArithmeticReturn } id ;
- * @output-prop { ArithmeticReturn } multiply_int(result, 2) ;
- * @input-prop { VoidReturn } permute_int(arr, length), { ArithmeticReturn } id ;
- * @output-prop { ArithmeticReturn } result ;
+ * @input-prop { multiply_int_array(arr, 2, length), id };
+ * @output-prop { multiply_int(result, 2) } ;
+ * @input-prop { permute_int(arr, length), id } ;
+ * @output-prop { id };
  */
 int sum(int *arr, int length) {
   int i, sum = 0;
@@ -23,10 +23,10 @@ int sum(int *arr, int length) {
 /**
  * Returns a pointer to a double that is the absolute value of a?
  *
- * @fun-info { absolute, PointerReturn, "double *" } ;
+ * @fun-info { absolute, "double *" } ;
  * @param-info { a, "double"} ;
- * @input-prop { ArithmeticReturn } multiply_double(a, -1) ;
- * @output-prop { ArithmeticReturn } result ;
+ * @input-prop { multiply_double(a, -1) };
+ * @output-prop { id };
  */
 double *absolute(double a) {
   double *answer = malloc(sizeof(double));

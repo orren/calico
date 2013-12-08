@@ -29,14 +29,13 @@ open Ast;;
 %token <Range.t * string> STRLIT   /* string literal */
 %token <Range.t * string> INT      /* integer */
 %token <Range.t * string> KWRD      /* reserved keyword */
-%token <Range.t * Ast.funKind> KIND    /* function kind */
 
 /* ---------------------------------------------------------------------- */
 /* Mark 'toplevel' as a starting nonterminal of the grammar */
 %start toplevel
 
 /* Define type annotations for toplevel and bexp */
-%type <Ast.annotated_comment> toplevel
+%type <Ast.raw_annotated_comment> toplevel
 %%
 
 /* The variables $1, $2, etc. refer to the values computed by the
@@ -47,11 +46,10 @@ toplevel:
   | topprog EOF                     { $1 }
 
 topprog:
-  | commlines funinfo params asets   { AComm ($2, $3, $4) }
+  | commlines funinfo params asets   { RAComm ($2, $3, $4) }
 
 funinfo:
-  | FUNSTART LBRACE IDENT LSEP KIND LSEP STRLIT RBRACE SEMI
-      { (snd $3, snd $5, snd $7) }
+  | FUNSTART LBRACE IDENT LSEP STRLIT RBRACE SEMI { (snd $3, snd $5) }
 
 params:
   | /* no parameters */           { [] }
@@ -79,15 +77,15 @@ aset:
   | inannot outannot staterec eqfun  { ASet ($1, $2, Some($3), Some($4)) }
 
 inannot:
-  | INSTART paramannots SEMI              { $2 }
+  | INSTART LBRACE paramannots RBRACE SEMI              { $3 }
 
 paramannots:
   | paramannot                              { [$1] }
   | paramannot LSEP paramannots             { $1 :: $3 }
 
 paramannot:
-  | LBRACE KIND RBRACE IDENT LPAREN arglist RPAREN { (snd $4, snd $2, $6) }
-  | LBRACE KIND RBRACE KWRD                        { (snd $4, snd $2, []) }
+  | IDENT LPAREN arglist RPAREN { (snd $1, $3) }
+  | KWRD                        { (snd $1, []) }
 
 arglist:
   | arg                            { [$1] }
@@ -99,7 +97,7 @@ arg:
   | STRLIT      { snd $1 }
 
 outannot:
-  | OUTSTART LBRACE KIND RBRACE annotelem SEMI     { ($5, snd $3) }
+  | OUTSTART LBRACE annotelem RBRACE SEMI     { $3 }
 
 staterec:
   | STATEREC LBRACE annotelem LSEP annotelem LSEP arg

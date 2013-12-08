@@ -20,7 +20,6 @@ type token =
   | STRLIT of (Range.t * string)
   | INT of (Range.t * string)
   | KWRD of (Range.t * string)
-  | KIND of (Range.t * Ast.funKind)
 
 val toplevel :
-  (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ast.annotated_comment
+  (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Ast.raw_annotated_comment

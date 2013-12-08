@@ -39,33 +39,29 @@ let output_transformation (procNum : int) (return_type : string)
                           (prop : out_annot) : string =
   let index = string_of_int procNum in
   "// < output_transformation\n    " ^
-  (* TODO: The following is not compatible with state recovery assertions *)
-  begin match prop with
-    | ("id", _)                -> ""
-    | (prop_name, ArithmeticReturn)        -> "*g_result" ^ index ^ " = " ^
-        Str.global_replace (Str.regexp "result") "*orig_result" prop_name
-    | (prop_name, VoidReturn)  -> prop_name
-    | (prop_name, PointerReturn) -> return_type ^ " *temp_g_result = " ^
-        Str.global_replace (Str.regexp "result") "orig_result" prop_name ^
-      ";\n    memcpy(g_result" ^ index ^ ", temp_g_result, result_sizes[" ^ index ^ "])"
-  end
+    (if prop = "id"
+     then "g_result" ^ index ^ " = orig_result;\n"
+     else if return_type = "void"
+     then "    " ^ prop ^ ";\n"
+     else
+       return_type ^ "* temp_g_result" ^ index ^ " = " ^
+         "malloc(" ^ "result_sizes[" ^ index ^ "]);\n" ^
+         "    *temp_g_result" ^ index ^ " = " ^
+         Str.global_replace (Str.regexp "result") "*orig_result" prop ^
+         ";\n    memcpy(g_result" ^ index ^ ", temp_g_result" ^ index ^
+         ", result_sizes[" ^ index ^ "])")
   ^ ";\n// output_transformation >\n"
 
 let input_transformation (param : param_info) (prop : param_annot) : string =
-  begin match (param, prop) with
-    | ((param_name, ty), (name, kind, inputs)) ->
-      let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
-      "// < input_transformation\n        " ^
-        begin match kind with
-          | ArithmeticReturn
-          | PointerReturn -> if String.compare param_name name = 0 ||
-                              String.compare name "id" = 0
-                           then ""
-                           else param_name ^ " = " ^ prop_expr
-          | VoidReturn  -> prop_expr
-        end
-      ^ ";\n// input_transformation >"
-  end
+  "// < input_transformation\n        " ^
+    begin match (param, prop) with
+      | ((param_name, ty), (name, inputs)) ->
+        let prop_expr = name ^ "(" ^ (String.concat ", " inputs) ^ ")" in
+        if String.compare param_name name = 0 || String.compare name "id" = 0
+        then ""
+        else param_name ^ " = " ^ prop_expr
+    end
+  ^ ";\n// input_transformation >"
 
 let recover_t_result (procNum : int) (aset : annotation_set) : string =
   match aset with
@@ -141,7 +137,7 @@ let property_assertion (return_type : string) (fun_kind : funKind)
       (if eqfun = "memcmp" then ", " ^ elem_size else "") ^ ")) {\n" ^
         "        printf(\"a property has been violated:\\ninput_prop: " ^
         (String.concat ", " (map name_of_param_annot param_props)) ^
-        "\\noutput_prop: " ^ (name_of_out_annot out_prop) ^ "\\n\");\n" ^
+        "\\noutput_prop: " ^ out_prop ^ "\\n\");\n" ^
         "        exit(1);\n" ^
         fprint_results procNum fun_kind return_type ^
         "      }\n" ^
