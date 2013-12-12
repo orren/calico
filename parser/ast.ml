@@ -9,8 +9,8 @@
 
 (* Writer facing interface to annotated comments *)
 type funKind = ArithmeticReturn
-               | VoidReturn
-               | PointerReturn
+             | VoidReturn
+             | PointerReturn
 type ty_str = string
 type param_annot = string * string list (* name, kind, transformation list *)
 type out_annot = string
@@ -28,7 +28,7 @@ type raw_fun_info = string * ty_str (* name, kind, type *)
 type raw_annotated_comment = RAComm of
     raw_fun_info * (param_info list) * (annotation_set list)
 
-(* Othe top level program elements *)
+(* Other top level program elements *)
 type function_body = string
 type function_header = string
 type program_element = SrcStr of string
@@ -92,7 +92,7 @@ let str_of_pelem (e : program_element) : string =
     | SrcStr (str) -> "SRC:\n" ^ str
     | ComStr (str) -> "COM:\n" ^ "/*" ^ str ^ "*/"
     | AFun (acomm, header, fundef) -> (str_of_annot acomm) ^ "\nHEADER: " ^ header ^ "\nSRCSTR: " ^ fundef
-    
+
 let str_of_prog (p : program_element list) : string =
   String.concat "\n" (List.map str_of_pelem p)
 
