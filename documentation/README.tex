@@ -266,10 +266,24 @@ Note that the original runtime was not subracted from the total, since the exper
 
 \section{Calico's Implementation}
 
-Calico is implemented in OCaml, a functional language well-suited to the task of source code rewriting. It consists of two main modules, calico/parser, which handles the C source inputs and parser them into the necessary data structure, and calcio/writer, the source code translator which takes that data structure and writes a new C source file.
+Calico is implemented in OCaml, a functional language well-suited to the task of source code rewriting. It consists of two main modules, calico/parser, which handles the C source inputs and parses them into the necessary data structure, and calico/writer, the source code translator which takes that data structure and writes a new C source file.
 
 \subsection{Description of the Parser}
 
+Calico's parser is implemented using Ocamlyacc ... %TODO
+
+The end result is an instance of the data structure defined in ast.ml, which serves as an interface between the parser and writer.
+
+% \subsection{Description of the abstract syntax tree}
+
+% sourceUnderTest: represents an entire C application. Consists of the name of the original C file and a list of program elements.
+
+% program_element: SrcStr represents source code that is not annotated and should be copied into the instrumented file verbatim. ComStr is a C comment which is not part of the annotation language and should also be copied over as-is. AFun represents an annotated function consisting of a comment that is part of the annotation language, the function header, and the body of the function.
+
+% annotated_comment:
+
 \subsection{Description of the Source Translator}
+
+The writer module has one primary file, calico\_writer.ml, which takes as input the data structure defined in ast.ml and proceeds to create an instrumented C source program with the same file path as the original, but with ``calico\_gen\_'' affixed to the beginning of the file name.
 
 \end{document}
