@@ -2,22 +2,8 @@ open Printf
 open List
 open Ast
 
-let rec repeat (s : string) (n : int) : string =
-  if n <= 1 then s else s ^ (repeat s (n - 1))
-
-let lbr (indent : int) : string =
-  ";\n" ^ (repeat "    " indent)
-
 let rec range_list (i : int) (j : int) (acc : int list) : int list =
   if i > j then acc else range_list i (j - 1) (j :: acc)
-
-let rec merge (l1:'a list) (l2:'a list) : 'a list =
-  begin match (l1, l2) with
-    | ([], []) -> []
-    | ([], l) -> l
-    | (l, []) -> l
-    | ((n1 :: rest1), (n2 :: rest2)) -> n1 :: n2 :: (merge rest1 rest2)
-  end ;;
 
 let call_inner_function (procNum: int) (name: string) (kind: funKind) (ty: string)
                         (params: param_info list) (recover : bool) : string =

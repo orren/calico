@@ -1,11 +1,8 @@
 (*  Ast.ml
  *
- *  The abstract syntax tree to be populated by this parser.
- *  This reflects the grammar for annotated C programs specified
- *  here: https://bitbucket.org/orren/calico/wiki/parser_spec.md
+ *  The abstract syntax tree to be populated by this parser and consumed
+ *  by the writer.
  *)
-
-(* Annotated C functions in context *)
 
 (* Writer facing interface to annotated comments *)
 type funKind = ArithmeticReturn
@@ -91,8 +88,9 @@ let str_of_pelem (e : program_element) : string =
   match e with
     | SrcStr (str) -> "SRC:\n" ^ str
     | ComStr (str) -> "COM:\n" ^ "/*" ^ str ^ "*/"
-    | AFun (acomm, header, fundef) -> (str_of_annot acomm) ^ "\nHEADER: " ^ header ^ "\nSRCSTR: " ^ fundef
-    
+    | AFun (acomm, header, fundef) -> (str_of_annot acomm) ^
+      "\nHEADER: " ^ header ^ "\nSRCSTR: " ^ fundef
+
 let str_of_prog (p : program_element list) : string =
   String.concat "\n" (List.map str_of_pelem p)
 
