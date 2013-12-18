@@ -3,7 +3,6 @@ INTERFACES =   \
 	parser/comparser.mli
 
 SOURCES = \
-	parser/ast.ml \
 	parser/range.ml   \
 	parser/lexutil.ml \
 	parser/comparser.ml  \
@@ -11,7 +10,7 @@ SOURCES = \
 	parser/prelex.ml  \
 	parser/srclexer.ml  \
 	parser/parsedriver.ml \
-	writer/calico_writer.ml
+	writer/calico_writer.ml \
 
 GEN_SOURCES =  \
 	parser/comparser.ml \
@@ -30,7 +29,7 @@ all_mut: build_main rwr_mut run_mut
 all_merge: build_main rwr_merge run_merge
 
 build_main: parser_pre calico.ml
-	ocamlc str.cma -I writer/ -I parser/ -o calicoMain $(INTERFACES) $(SOURCES) calico.ml
+	ocamlc str.cma -I writer/ -I parser/ -o calicoMain parser/ast.ml $(INTERFACES) $(SOURCES) calico.ml
 
 comp_SUT: examples/test_SUT.c
 	gcc -I . -Wall -o test_SUT_original examples/test_SUT.c

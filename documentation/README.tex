@@ -277,6 +277,20 @@ Calico is implemented in OCaml, a functional language well-suited to the task of
 
 The Parser consists of a series of transformations based on an annotated C source. First, the source file is parsed into sections of C source and comments (those indicated with ``/*'' and ``*/''). The resulting list of program elements is traversed and inspected for the presence of annotated functions. If an annotated comment is detected (by the presence of a function info annotation in the comment text), the parser attempts to parse the comment according to the annotation language and if succesful replaces this comment/source pair in the list of program elements with an annotated function data structure composed of information about the function and its annotations, the original function header, and the original function body. If no errors are encountered, the resulting list of program elements and function annotations compose the output of the parser module.
 
+Calico's parser is implemented using Ocamlyacc ... %TODO
+
+The end result is an instance of the data structure defined in ast.ml, which serves as an interface between the parser and writer.
+
+% \subsection{Description of the abstract syntax tree}
+
+% sourceUnderTest: represents an entire C application. Consists of the name of the original C file and a list of program elements.
+
+% program_element: SrcStr represents source code that is not annotated and should be copied into the instrumented file verbatim. ComStr is a C comment which is not part of the annotation language and should also be copied over as-is. AFun represents an annotated function consisting of a comment that is part of the annotation language, the function header, and the body of the function.
+
+% annotated_comment:
+
 \subsection{Description of the Source Translator}
+
+The writer module has one primary file, calico\_writer.ml, which takes as input the data structure defined in ast.ml and proceeds to create an instrumented C source program with the same file path as the original, but with ``calico\_gen\_'' affixed to the beginning of the file name.
 
 \end{document}
