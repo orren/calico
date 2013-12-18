@@ -111,7 +111,7 @@ int main () {
 }
 \end{verbatim}
 
-the sum function has been annotated to assert two of its metamorphic properties. The first if each element of the input array is doubled, the resulting output should also be doubled. The second is that if the original array is replaced with one of twice its length consisting of the original array end to end, the result should be double.
+the sum function has been annotated to assert two of its metamorphic properties. The first is that if each element of the input array is doubled, the resulting output should also be doubled. The second is that if the original array is replaced with one of twice its length consisting of the original array end to end, the result should be double.
 
 Instrumentation by calico results in the following file (calico\_gen\_sum\_example.c):
 
@@ -246,7 +246,7 @@ The current implementation of the annotation parser requires information about t
 
 \subsection{optimizations in memory management}
 
-Calico will not optimallly instrument a certain subset of C functions with respect to memory managment. Notably, functions which perform side effects on large regions of memory will create redundant copies of those regions in the instrumented version of the function. Changes could be made to calico's source translator that cause it to identify situations where copying memory is not necessary and direct reads of data to an original result location rather than a copied version.
+Calico will not optimally instrument a certain subset of C functions with respect to memory managment. Notably, functions which perform side effects on large regions of memory will create redundant copies of those regions in the instrumented version of the function. Changes could be made to calico's source translator that cause it to identify situations where copying memory is not necessary and direct reads of data to an original result location rather than a copied version.
 
 Benefits of this feature in terms of space complexity would be linear with respect to the size of the inputs and outputs of the function under test. Benefits in terms of runtime complexity would be the similar, however the overhead of process spawning and deallocation is expected to be more expensive than these calls to memcpy, and significant runtime gains should not be expected unless the input or output sizes are extremely large.
 
